@@ -1,0 +1,68 @@
+{
+  "_from": "obj-file-parser",
+  "_id": "obj-file-parser@0.5.3",
+  "_inBundle": false,
+  "_integrity": "sha512-lGfXQi/4BlSS9r0ISUfQoYzYS1rjr9AJ+zDp39lm8wlsqx3TAqsOOrQhSGL/2lCfv8QhSfrCq1NfLYGuw/V0Sg==",
+  "_location": "/obj-file-parser",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "obj-file-parser",
+    "name": "obj-file-parser",
+    "escapedName": "obj-file-parser",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/obj-file-parser/-/obj-file-parser-0.5.3.tgz",
+  "_shasum": "e7691bdb254d7b4fa7119c877d7a8abefb76e50b",
+  "_spec": "obj-file-parser",
+  "_where": "C:\\Users\\Oxales\\Downloads\\Raytracing-with-JavaScript-main",
+  "author": {
+    "name": "Wesley Unwin",
+    "email": "wes_unwin@hotmail.com"
+  },
+  "bugs": {
+    "url": "https://github.com/WesUnwin/obj-file-parser/issues"
+  },
+  "bundleDependencies": false,
+  "deprecated": false,
+  "description": "Wavefront 3D Object File (.OBJ) Parser",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-es2015": "^6.24.1",
+    "eslint": "^4.5.0",
+    "eslint-config-airbnb-base": "^11.3.1",
+    "eslint-plugin-import": "^2.7.0",
+    "jest": "^20.0.4"
+  },
+  "homepage": "https://github.com/WesUnwin/obj-file-parser#readme",
+  "keywords": [
+    "obj",
+    "file",
+    "3D",
+    "parser",
+    "wavefront",
+    "mtl"
+  ],
+  "license": "MIT",
+  "main": "./dist/OBJFile.js",
+  "name": "obj-file-parser",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WesUnwin/obj-file-parser.git"
+  },
+  "scripts": {
+    "build": "babel src --presets babel-preset-es2015 --out-dir dist",
+    "lint": "eslint src/**",
+    "lint:fix": "eslint src/** --fix",
+    "prepublish": "npm run build",
+    "test": "jest"
+  },
+  "version": "0.5.3"
+}
