@@ -1,0 +1,132 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <title>RasterJS</title>
+    <link type="text/css" rel="stylesheet" href="style.css">
+</head>
+    <script async type="module" src="main.js"></script>
+    <body>
+        <summary>Click to hide info</summary>
+        <h1>Welcome to RasterJS v1.2</h1>
+        <p style="word-wrap: break-word;">This is a Javascript based Rasterization(3d) program. 
+            This program is a work in progress and this is the latest usable version.
+        </p>
+        <br>
+        <br>
+        <p>
+        What you see on the screen bellow is an asteroid field.
+        </p>
+        <br>
+        <br>
+        <p>
+        You may also import custom models.
+        But first ensure that the models are in an obj format and only have polygons with 3 verticies, the program doesn't support quad or n-gons.
+        To select the color of the imported object, you must change the RGB values before importing it.
+        </p>
+        <br>
+        <br>
+        <p>
+        Controls:
+        </p>
+        <ul>
+            <li>Forward: W</li>
+            <li>Backward: S</li>
+            <li>Left: A</li>
+            <li>Right: D</li>
+            <li>Up: Space</li>
+            <li>Down: Left Shift</li>
+            <li>Camera Look Around: Left Click and Move Mouse</li>
+            <li>Tilt Left: Q (Broken)</li>
+            <li>Tilt Right: E (Broken)</li>
+            <li>Stop Camera Look Around: ESC</li>
+        </ul>
+        <br>
+        <table class="mainTable" style="display: inline-block;">
+            <tr>
+                <td>
+                    <p>Fov: </p>
+                    <input type="number" id="fov" value="70">
+                </td>
+                <td>
+                    <p>Position-X: </p>
+                    <input type="number" id="positionX" value="0">
+                </td>
+                <td>
+                    <p>Import .obj file:</p>
+                    <input type="file" id="file">
+                </td>
+                <td>
+                    <p>ResolutionX: </p>
+                    <input type="number" id="resolutionX" value="641">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p>Left-Right: </p>
+                    <input type="number" id="cameraX" value='0'>
+                </td>
+                <td>
+                    <p>Position-Y: </p>
+                    <input type="number" id="positionY" value='0'>
+                </td>
+                <td>
+                    <p>Delete OBJ#: </p>
+                    <input type="number" id="OBJind" value="1">
+                    <input type="button" id="delete" value="Delete">
+                </td>
+                <td>
+                    <p>ResolutionY: </p>
+                    <input type="number" id="resolutionY" value="360">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p>Up-Down: </p>
+                    <input type="number" id="cameraY" value='-1'>
+                </td>
+                <td>
+                    <p>Position-Z: </p>
+                    <input type="number" id="positionZ" value='0'>
+                </td>
+                <td>
+                    <form>
+                        <p>Color RGB: </p>
+                        <input  type="number" id="B" value='0' max='255'>
+                        <input type="number" id="G" value='255' max='255'>
+                        <input type="number" id="R" value='0' max='255'>
+                    </form>
+                </td>
+                <td>
+                    <p>Sensitivity: </p>
+                    <input type="number" id="sens" value="1">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p>Tilt: </p>
+                    <input type="number" id="cameraW" value='0'>
+                </td>
+            </tr>
+        </table>
+        <table class="mainTable">
+            <tr>
+                <td>
+                    <p id="importedObjects">Imported OBJs:</p>
+                </td>
+            </tr>
+        </table>
+        <table class="mainTable">
+            <tr>
+                <td>
+                    <p id="Frames">Frames: </p>
+                </td>
+                <td>
+                    <p id="Framerate">Framerate: </p>
+                </td>
+            </tr>
+        </table>
+        <h2>Viewport</h2>
+        <canvas width="641" height="360"></canvas>
+    </body>
+</html>
