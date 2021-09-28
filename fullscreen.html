@@ -1,0 +1,36 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <title>RasterJS</title>
+    <link type="text/css" rel="stylesheet" href="style2.css">
+</head>
+    <script async type="module" src="main.js"></script>
+    <body style='overflow: hidden;'>
+        <input type="number" id="fov" value="70">
+        <input type="number" id="positionX" value="0">
+        <input type="file" id="file">
+        <input type="number" id="resolutionX" value="800">
+        <input type="number" id="cameraX" value='0'>
+        <input type="number" id="positionY" value='0'>
+        <input type="number" id="OBJind" value="1">
+        <input type="button" id="delete" value="Delete">
+        <input type="number" id="resolutionY" value="430">
+        <input type="number" id="cameraY" value='-1'>
+        <input type="number" id="positionZ" value='0'>
+        <input  type="number" id="B" value='0' max='255'>
+        <input type="number" id="G" value='255' max='255'>
+        <input type="number" id="R" value='0' max='255'>
+        <input type="number" id="sens" value="1">
+        <input type="number" id="cameraW" value='0'>
+        <table class="mainTable">
+        <p id="Frames" style='display: none;'>Frames: </p>
+        <p id="Framerate" style='display: none;'>Framerate: </p>
+        <p id="Vertex Count" style='display: none;'>Vertex Count: </p>
+        <audio controls loop id="music" style='display: none'>
+            <source src="./music/Kevin MacLeod _ Arcadia.mp3" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+        <canvas width="800" height="460"></canvas>
+    </body>
+</html>
