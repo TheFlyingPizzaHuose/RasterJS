@@ -22,7 +22,7 @@ function vectorDistance(point1, point2){
 	point1.forEach((value,i)=>{
 		sum+=Math.pow(value-point2[i], 2);
 	})
-	return Math.sqrt(sum);
+	return sum;
 }
 
 //calculate crossProduct 100%

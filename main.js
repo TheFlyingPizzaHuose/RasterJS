@@ -11,10 +11,10 @@ var frameTime = false;
 var ctx = document.querySelector('canvas'), c = ctx.getContext("2d"), width = ctx.width, height = ctx.height;
 
 //debug variables
-var frameCounter = 0, frameSinceLastTime = 0;
+var frameCounter = 0, frameSinceLastTime = 0, vertexCount = 0;
 
 //scene data variables
-var sceneData = [], imported = [], objectVerticies = [], sortedIndexes = [];;
+var sceneData = [], objectVerticies = [], sortedIndexes = [], starField = [];
 
 //camera variables 
 var cameraVector = [0,0,0], cameraPerpendicular = [], cameraVector3 = [], cameraVertical = [], cameraLocation = [0, -1, 0], cameraLocationPrevious = [], fov = 70;
@@ -33,9 +33,11 @@ document.addEventListener('mozpointerlockchange', lockChangeAlert, false);
 function lockChangeAlert() {
 	if (document.pointerLockElement === ctx ||
 		document.mozPointerLockElement === ctx) {
-	  document.addEventListener("mousemove", updatePosition, false);
+		var music = document.getElementById('music');
+		music.play();	
+		document.addEventListener("mousemove", updatePosition, false);
 	} else { 
-	  document.removeEventListener("mousemove", updatePosition, false);
+		document.removeEventListener("mousemove", updatePosition, false);
 	}
 }
 function updatePosition(e) {
@@ -73,10 +75,10 @@ function logKey(e) {
 	if(e.code == 'ShiftLeft'){
 		moveDown = true;
 	}
-	if(e.code == 'NumpadAdd'){
+	if(e.code == 'KeyZ'){
 		increaseSpeed = true;
 	}
-	if(e.code == 'NumpadSubtract'){
+	if(e.code == 'KeyX'){
 		decreaseSpeed = true;
 	}
 }
@@ -105,18 +107,18 @@ function logKey2(e) {
 	if(e.code == 'ShiftLeft'){
 		moveDown = false;
 	}
-	if(e.code == 'NumpadAdd'){
+	if(e.code == 'KeyZ'){
 		increaseSpeed = false;
 	}
-	if(e.code == 'NumpadSubtract'){
+	if(e.code == 'KeyX'){
 		decreaseSpeed = false;
 	}
 }
 
 //moves camera
 function cameraMove(){
-	increaseSpeed? movementSpeed++: nothing();
-	decreaseSpeed? movementSpeed--: nothing();
+	increaseSpeed? movementSpeed*=1.1: nothing();
+	decreaseSpeed? movementSpeed=movementSpeed/1.1: nothing();
 	moveForward? cameraLocation = vectorAdd(cameraLocation, vectorScalar(cameraVector3, 0.1*movementSpeed)): nothing();
 	moveBackward? cameraLocation = vectorAdd(cameraLocation, vectorScalar(cameraVector3, -0.1*movementSpeed)): nothing();
 	moveLeft? cameraLocation = vectorAdd(cameraLocation, vectorScalar(cameraPerpendicular, -0.1*movementSpeed)): nothing();
@@ -197,6 +199,10 @@ function raster(){
 		//Backface cull
 		if(vectorsToAngle(cameraVector3, value.normal)/Math.PI < (0.5+(fov/360))){
 
+			//Checks if model is in skybox
+			var cameraLocation2;
+			value.isBackground? cameraLocation2=[0,0,0]: cameraLocation2=cameraLocation;
+
 			//Get 2d coords
 			//Checks if 2d coord has already been calculated
 			var vertexes = [objectVerticies[triangle[1]][value.v1], objectVerticies[triangle[1]][value.v2], objectVerticies[triangle[1]][value.v3]];
@@ -204,11 +210,15 @@ function raster(){
 			var thisObject = TwoDemCoords[triangle[1]];
 			[value.v1, value.v2, value.v3].forEach((e, i)=>{
 				thisObject[e] != false? coords[i] = thisObject[e]:
-					coords[i] = vertexToPixel(vertexes[i], cameraLocation, cameraVector3, cameraPerpendicular, fov, width, cameraVertical, cameraVector[2]);
+					coords[i] = vertexToPixel(vertexes[i], cameraLocation2, cameraVector3, cameraPerpendicular, fov, width, cameraVertical, cameraVector[2]);
 					TwoDemCoords[triangle[1]][e] = coords[i];
 			})
-			
-			var triangleDepth = generateZMap(coords, vectorsToAngle(value.normal, [-0.5,1,1])/Math.PI, value.color, width/2, height/2);
+
+			//Checks if shading is off
+			var shade = (vectorsToAngle(value.normal, [-0.5,1,0.3])/Math.PI-0.1)*2
+			value.isEmmision? shade = 1: nothing();
+
+			var triangleDepth = generateZMap(coords, shade, value.color, width/2, height/2);
 
 			triangleDepth.forEach(value=>{
 				//Checks if coord is outside of view
@@ -227,6 +237,20 @@ function raster(){
 		}
 	})
 	frameTime? console.timeEnd('Frame Time'): nothing();
+	starField.forEach(value=>{
+		var coords = vertexToPixel([value[0],value[1],value[2],], [0,0,0], cameraVector3, cameraPerpendicular, fov, width, cameraVertical, cameraVector[2]);
+		var Xpos = coords[0] + (width/2)
+		var Ypos = coords[1] + (height/2)
+		if(0 < Xpos && Xpos < width && 0 < Ypos && Ypos < height){	
+			var displayPosition = (Xpos + (Ypos * width));
+			if (displayPosition<ZMap.length){
+				if(ZMap[displayPosition].length < 1 || ZMap[displayPosition] == undefined){
+					ZMapIndexes.push(displayPosition);
+				}
+				ZMap[displayPosition].push([coords[0], coords[1], value[3]]);
+			}
+		}
+	})
 	//Shading
 	ZMapIndexes.forEach(value3=>{
 		var value = ZMap[value3][0];
@@ -235,9 +259,10 @@ function raster(){
 			var Ypos = parseInt(value[1] + (height/2));
 			var displayPosition = (Xpos + (Ypos * width))*4;
 			if (displayPosition <result.length){
-				result[displayPosition] 	= value[5][0];
-				result[displayPosition + 1] = value[5][1];
-				result[displayPosition + 2] = value[5][2];
+				result[displayPosition] 	= value[2][0];
+				result[displayPosition + 1] = value[2][1];
+				result[displayPosition + 2] = value[2][2];
+				result[displayPosition + 3] = value[2][3];
 			}
 		}
 	})
@@ -275,7 +300,18 @@ function getFramerate(){
 	frameSinceLastTime = 0;
 }
 
-selfImport('./Planet Rings.obj', [255, 200, 150])
+selfImport('./models/Planet Rings.obj', [255, 180, 150], [0,0,10]);
+selfImport('./models/Planet.obj', [255, 100, 100], [0,0,10]);
+selfImport('./models/Sun.obj', [255, 255, 255], [-3000,6000,1800], 100, true, true);
+
+//Create starfield
+for(var i=0; i<2000; i++){
+	starField.push([parseInt((Math.random()-0.5)*1000), 
+					parseInt((Math.random()-0.5)*1000), 
+					parseInt((Math.random()-0.5)*1000), 
+					[255, (Math.random()*500), (Math.random()*500), 255], ])
+}
+
 
 setInterval(getFramerate, 1000);
 if(debugMode != false){ 
@@ -295,7 +331,7 @@ inputElement.addEventListener('change', function(){
 }, false);
 
 //convert obj to scene data
-function importOBJ(blob, color){
+function importOBJ(blob, color, offset=[0,0,0], scale=1, isEmmision=false, isBackground=false){
 	const fr = new FileReader();
 	//convert the file into text
 	fr.addEventListener('load', (event)=>{
@@ -307,8 +343,10 @@ function importOBJ(blob, color){
 		//Adds verticies to objectVerticies
 		var temp = [];
 		content.vertices.forEach(value=>{
-			temp.push(Object.values(value));
+			temp.push(vectorAdd(vectorScalar(Object.values(value), scale), offset));
 		})
+		//Updates vertex count
+		vertexCount+=temp.length;
 
 		//select faces
 		var objectData = [];
@@ -326,7 +364,7 @@ function importOBJ(blob, color){
 			var B = parseInt(color[2]);
 
 			//add face to sceneData
-			var newFace = new face(1, [R, G, B], indexes[0], indexes[1], indexes[2], temp);
+			var newFace = new face(1, [R, G, B], indexes[0], indexes[1], indexes[2], temp, isEmmision, isBackground);
 
 			objectData.push(newFace);
 		})
@@ -334,15 +372,14 @@ function importOBJ(blob, color){
 		//display that another object has been imported 
 		objectVerticies.push(temp);
 		sceneData.push(objectData);
-		imported.push(content.name);
 		console.log('import success');
-		document.getElementById('importedObjects').textContent = "Imported OBJs: " + imported;
+		document.getElementById('Vertex Count').textContent = "Vertex Count: " + vertexCount;
 	});
 	fr.readAsText(blob);
 }
 
 //self import file
-function selfImport(file, color)
+function selfImport(file, color, offset, scale, isEmmision, isBackground)
 {
     var rawFile = new XMLHttpRequest();
     rawFile.open("GET", file, false);
@@ -353,7 +390,7 @@ function selfImport(file, color)
             if(rawFile.status === 200 || rawFile.status == 0)
             {
                 var allText = rawFile.responseText;
-                importOBJ(new Blob([allText]), color);
+                importOBJ(new Blob([allText]), color, offset, scale, isEmmision, isBackground);
             }
         }
     }
@@ -363,9 +400,7 @@ function selfImport(file, color)
 document.getElementById('delete').onclick = function(){
 	var tempi = parseInt(document.getElementById('OBJind').value) -1;
 	sceneData.splice(tempi, 1);
-	imported.splice(tempi,1);
 	objectVerticies.splice(tempi,1);
-	document.getElementById('importedObjects').textContent = "Imported OBJs: " + imported;
 }
 
 function nothing(){
