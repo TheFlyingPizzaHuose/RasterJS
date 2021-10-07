@@ -4,7 +4,7 @@
 }
 body{
     align-self: center;
-    background-color: black;
+    background-color: rgb(0, 0, 0);
 }
 input{
     float: right;
@@ -30,7 +30,7 @@ table{
 td{
     width: 10%;;
 }
-canvas{
+.screen{
     margin-left: 0%;
     margin-right: 0%;
     display: block;
