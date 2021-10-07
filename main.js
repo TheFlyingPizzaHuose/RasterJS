@@ -21,7 +21,7 @@ var ctx = document.getElementById('screen'), c = ctx.getContext("2d"), width = c
 //Debug variables
 var frameCounter=0, frameSinceLastTime=0, vertexCount=0
 //Scene data variables
-var sceneData=[],objectVerticies=[],sortedIndexes=[],starField=[],particles=[],textures=[], sunAngle=(date_ob.getMinutes()/20)*360;
+var sceneData=[],objectVerticies=[],sortedIndexes=[],starField=[],particles=[],textures=[], sunAngle=(date_ob.getMinutes()/20)*360, gamma=3;
 //Camera variables 
 var cameraVector=[0,0,0],cameraPer=[],cameraVector3=[],cameraVer=[],cameraLocation=[0, -100, 0],cameraLocationPrevious=[],fov=70,fovLength=1;
 //###########################################Variables###########################################
@@ -208,7 +208,7 @@ function raster(){
 			})
 
 			//Checks if shading is off
-			var shade = value.isEmmision? 1: (vectorsToAngle(value.normal, camera2to3([-50, sunAngle]))/Math.PI-0.5)*6;
+			var shade = value.isEmmision? 1: gamma/(1+Math.exp((vectorsToAngle(value.normal, camera2to3([-50, sunAngle]))/Math.PI)*value.roughness));
 			var triangleDepth = generateZMap(coords, shade, value.color, width, height);
 			triangleDepth.forEach(value=>{
 				//Checks if coord is outside of view
@@ -332,56 +332,79 @@ function selfImport(file, color, offset=[0,0,0], scale=1, isEmmision=false, isBa
     rawFile.open("GET", file, false);
     rawFile.onreadystatechange = function ()
     {
-        if(rawFile.readyState === 4)
+        if(rawFile.readyState === 4 && (rawFile.status === 200 || rawFile.status == 0))
         {
-            if(rawFile.status === 200 || rawFile.status == 0)
-            {
-                var allText = new Blob([rawFile.responseText]);
-				const fr = new FileReader();
-				//convert the file into text
-				fr.addEventListener('load', (event)=>{
+			var allText = new Blob([rawFile.responseText]);
+			const fr = new FileReader();
+			//convert the file into text
+			fr.addEventListener('load', (event)=>{
 
-					//convert the text into .OBJ object
-					const obj = new objParse.OBJFile(event.target.result);
-					var content = obj.parse().models[0];
-					//Adds verticies to objectVerticies
-					var temp = [];
-					content.vertices.forEach(value=>{
-						temp.push(vectorAdd(vectorScalar(Object.values(value), scale), offset));
-					})
-					objectVerticies.push(temp);
-					//Updates vertex count
-					vertexCount+=temp.length;
+				//convert the text into .OBJ object
+				const obj = new objParse.OBJFile(event.target.result);
+				var content = obj.parse().models[0];
+				//Adds verticies to objectVerticies
+				var temp = [];
+				content.vertices.forEach(value=>{
+					temp.push(vectorAdd(vectorScalar(Object.values(value), scale), offset));
+				})
+				objectVerticies.push(temp);
+				//Updates vertex count
+				vertexCount+=temp.length;
 
-					//select faces
-					var objectData = [];
-					content.faces.forEach((value)=>{
-						var indexes = [];
-						//get indexes of verticies for the face
-						value.vertices.forEach((value2)=>{
-							indexes.push(value2.vertexIndex-1);
-						})
-
-						//get color values
-						var R = parseInt(color[0]);
-						var G = parseInt(color[1]);
-						var B = parseInt(color[2]);
-
-						//add face to sceneData
-						var newFace = new face(1, [R, G, B], indexes, temp, isEmmision, isBackground, LOD);
-						objectData.push(newFace);
+				//select faces
+				var objectData = [];
+				content.faces.forEach((value)=>{
+					var indexes = [];
+					//get indexes of verticies for the face
+					value.vertices.forEach((value2)=>{
+						indexes.push(value2.vertexIndex-1);
 					})
 
-					//display that another object has been imported
-					sceneData.push(objectData);
-					console.log('import success');
-					document.getElementById('Vertex Count').textContent = "Vertex Count: " + vertexCount;
-				});
-				fr.readAsText(allText);
-            }
+					//get color values
+					var R = parseInt(color[0]);
+					var G = parseInt(color[1]);
+					var B = parseInt(color[2]);
+
+					//add face to sceneData
+					var newFace = new face(3, [R, G, B], indexes, temp, isEmmision, isBackground, LOD);
+					objectData.push(newFace);
+				})
+
+				//display that another object has been imported
+				sceneData.push(objectData);
+				console.log('import success');
+				document.getElementById('Vertex Count').textContent = "Vertex Count: " + vertexCount;
+			});
+			fr.readAsText(allText);
         }
     }
     rawFile.send(null);
+}
+//copy paste model
+function copyPaste(model, vertices, offset=[0,0,0], scale=1, isEmmision=false, isBackground=false, LOD=false, randomColor=false){
+	//Adds verticies to objectVerticies
+	var temp = [];
+	vertices.forEach(value=>{
+		temp.push(vectorAdd(vectorScalar(value, scale), offset));
+	})
+	objectVerticies.push(temp);
+	//Updates vertex count
+	vertexCount+=temp.length;
+
+	//select faces
+	var color = randomColor? vectorScalar(model[0].color, (Math.random()+0.5)/1.5): model[0].color
+	var objectData = [];
+	model.forEach(value=>{
+
+		//add face to sceneData
+		var newFace = new face(3, color, [value.v1, value.v2, value.v3], temp, isEmmision, isBackground, LOD);
+		objectData.push(newFace);
+	})
+
+	//display that another object has been imported
+	sceneData.push(objectData);
+	console.log('copied!');
+	document.getElementById('Vertex Count').textContent = "Vertex Count: " + vertexCount;
 }
 //Self import texture
 function importTexture(path, alias){
@@ -417,63 +440,73 @@ function nothing(){
 	return null;
 }
 
+//Loading Screen
+var load = new Image();
+load.onload = function() {
+	c.drawImage(load, 0, 0);
+};
+load.src = './textures/loading.png';
 importTexture('./textures/debug.png')
 importTexture('./textures/fireball.png')
 importTexture('./textures/Asteroid.PNG')
-setTimeout(() => {
-	selfImport('./models/Sun.obj', [255, 255, 255], [-3000,3000,1800], 80, true, true);
-	selfImport('./models/Sun.obj', [255, 100, 100], [0,0,0], 5);
-	//creates asteroid field
-	for(var i=0; i<500; i++){
-		var selectModel = parseInt(Math.random()*5)
-		var distance = 100*((Math.random()+4)/5)
-		var angle = Math.random()*2*Math.PI
-		var position = [distance*Math.sin(angle), distance*Math.cos(angle), (Math.random()-0.5)*2]
-		var lod = [10, 1000]
-		var sclrurer =  0.1*(Math.random()+1)/2
-		switch(selectModel){
-			case 1:
-				selfImport('./models/1.obj', [250, 160, 100], position, sclrurer, false, false, lod);
-				break;
-			case 2:
-				selfImport('./models/2.obj', [250, 160, 100], position, sclrurer, false, false, lod);
-				break;
-			case 3:
-				selfImport('./models/3.obj', [250, 160, 100], position, sclrurer, false, false, lod);
-				break;
-			case 4:
-				selfImport('./models/4.obj', [250, 160, 100], position, sclrurer, false, false, lod);
-				break;
-			case 5:
-				selfImport('./models/5.obj', [250, 160, 100], position, sclrurer, false, false, lod);
-				break;
-		}
-		particles.push(new particle(50, position, [1000, 1000000], 2, false))
-	}
-}, 500);
+
+selfImport('./models/Sun.obj', [255, 255, 255], [-3000,3000,1800], 80, true, true);
+selfImport('./models/Sun.obj', [255, 100, 100], [0,0,0], 5);
+selfImport('./models/1.obj', [250, 160, 100], [0,0,0], 1, false, false, [100000000,100000001]);
+selfImport('./models/2.obj', [250, 160, 100], [0,0,0], 1, false, false, [100000000,100000001]);
+selfImport('./models/3.obj', [250, 160, 100], [0,0,0], 1, false, false, [100000000,100000001]);
+selfImport('./models/4.obj', [250, 160, 100], [0,0,0], 1, false, false, [100000000,100000001]);
+selfImport('./models/5.obj', [250, 160, 100], [0,0,0], 1, false, false, [100000000,100000001]);
 
 //Gives time for texture import
 setTimeout(function(){
-	console.log(objectVerticies)
-	console.log(textures)
-	//Create fireballs
-	for(var i=0; i<50; i++){
-		particles.push(new particle(30000, vectorScalar(camera2to3([Math.random()*360, Math.random()*360]), 410), [0,100000], 1, true))
-	}
-	//Create starfield
-	for(var i=0; i<4000; i++){
-		starField.push([parseInt((Math.random()-0.5)*1000), 
-						parseInt((Math.random()-0.5)*1000), 
-						parseInt((Math.random()-0.5)*1000), 
-						[255, (Math.random()*500), (Math.random()*500), 255], ])
-	}
-	fov = document.getElementById('fov').value
-	if(debugMode != false){ 
-		for(var i=0; i<debugMode; i++){
-			render()
+		console.log(objectVerticies)
+		console.log(textures)	
+		//creates asteroid field
+		for(var i=0; i<500; i++){
+			var selectModel = parseInt(Math.random()*6)
+			var distance = 100*((Math.random()+4)/5)
+			var angle = Math.random()*2*Math.PI
+			var position = [distance*Math.sin(angle), distance*Math.cos(angle), (Math.random()-0.5)*2]
+			var lod = [2, 1000]
+			var sclrurer =  0.1*(Math.random()+1)/2
+			switch(selectModel){
+				case 1:
+					copyPaste(sceneData[2], objectVerticies[2], position, sclrurer, false, false, lod, true)
+					break;
+				case 2:
+					copyPaste(sceneData[3], objectVerticies[3], position, sclrurer, false, false, lod, true)
+					break;
+				case 3:
+					copyPaste(sceneData[4], objectVerticies[4], position, sclrurer, false, false, lod, true)
+					break;
+				case 4:
+					copyPaste(sceneData[5], objectVerticies[5], position, sclrurer, false, false, lod, true)
+					break;
+				case 5:
+					copyPaste(sceneData[6], objectVerticies[6], position, sclrurer, false, false, lod, true)
+					break;
+			}
+			particles.push(new particle(50, position, [1000, 5000], 2, false))
 		}
-	}else{
-		setInterval(getFramerate, 1000);
-		setInterval(render, frameCap);
-	}
-}, 500);
+		//Create fireballs
+		for(var i=0; i<50; i++){
+			particles.push(new particle(30000, vectorScalar(camera2to3([Math.random()*360, Math.random()*360]), 410), [0,100000], 1, true))
+		}
+		//Create starfield
+		for(var i=0; i<4000; i++){
+			starField.push([parseInt((Math.random()-0.5)*1000), 
+							parseInt((Math.random()-0.5)*1000), 
+							parseInt((Math.random()-0.5)*1000), 
+							[255, (Math.random()*500), (Math.random()*500), 255], ])
+		}
+		fov = document.getElementById('fov').value
+		if(debugMode != false){ 
+			for(var i=0; i<debugMode; i++){
+				render()
+			}
+		}else{
+			setInterval(getFramerate, 1000);
+			setInterval(render, frameCap);
+		}
+}, 2000);
