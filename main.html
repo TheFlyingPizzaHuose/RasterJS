@@ -5,16 +5,21 @@
     <title>RasterJS</title>
     <link type="text/css" rel="stylesheet" href="style.css">
 </head>
-    <script async type="module" src="main.js"></script>
+    <script async type="module" src="main.js" allow="cross-origin-isolated"></script>
     <body>
-        <h1>Welcome to RasterJS v1.2</h1>
+        <h1>Welcome to RasterJS v1.5</h1>
         <p style="word-wrap: break-word;">This is a Javascript based Rasterization(3d) program. 
             This program is a work in progress and this is the latest usable version.
         </p>
         <br>
         <br>
         <p>
-        What you see on the screen bellow is an asteroid field.
+        What you see on the screen bellow is a pink planet with it's asteriod ring. The asteroids are randomly generated
+        </p>
+        <br>
+        <br>
+        <p>
+        The position of the sun (time of day) is dependent on real world time and repeats every 20 minutes
         </p>
         <br>
         <br>
@@ -55,11 +60,7 @@
             <tr>
                 <td>
                     <p>Fov: </p>
-                    <input type="number" id="fov" value="70">
-                </td>
-                <td>
-                    <p>Position-X: </p>
-                    <input type="number" id="positionX" value="0">
+                    <input type="range" id="fov" value="100" min='10' max='179'>
                 </td>
                 <td>
                     <p>Import .obj file:</p>
@@ -72,32 +73,17 @@
             </tr>
             <tr>
                 <td>
-                    <p>Left-Right: </p>
-                    <input type="number" id="cameraX" value='0'>
-                </td>
-                <td>
-                    <p>Position-Y: </p>
-                    <input type="number" id="positionY" value='0'>
-                </td>
-                <td>
                     <p>Delete OBJ#: </p>
                     <input type="number" id="OBJind" value="1">
                     <input type="button" id="delete" value="Delete">
                 </td>
+                <td></td>
                 <td>
                     <p>ResolutionY: </p>
                     <input type="number" id="resolutionY" value="430">
                 </td>
             </tr>
             <tr>
-                <td>
-                    <p>Up-Down: </p>
-                    <input type="number" id="cameraY" value='-1'>
-                </td>
-                <td>
-                    <p>Position-Z: </p>
-                    <input type="number" id="positionZ" value='0'>
-                </td>
                 <td>
                     <form>
                         <p>Color RGB: </p>
@@ -106,16 +92,13 @@
                         <input type="number" id="R" value='0' max='255'>
                     </form>
                 </td>
+                <td></td>
                 <td>
                     <p>Sensitivity: </p>
-                    <input type="number" id="sens" value="1">
+                    <input type="number" id="sens" value="0.1">
                 </td>
             </tr>
             <tr>
-                <td>
-                    <p>Tilt: </p>
-                    <input type="number" id="cameraW" value='0'>
-                </td>
             </tr>
         </table>
         <table class="mainTable">
@@ -138,6 +121,7 @@
         <h2>Viewport</h2>
         <a href="/screenOnly">Go To Fullscreen Site
         </a>
-        <canvas width="800" height="460"></canvas>
+        <canvas class="screen" id="screen" width="800" height="460"></canvas>
+        <canvas id="texture" style="display: hidden"></canvas>
     </body>
 </html>
