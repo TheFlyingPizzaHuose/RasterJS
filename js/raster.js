@@ -23,9 +23,9 @@ function vertexToPixel(vector1, cameraLocation, cameraVector, cameraPerpendicula
         var rat1 = vectorScalar(cameraVector, ratio);
         var onPlane = vectorSubtract(relVec, rat1)
         var temp = width/ratio
-        var X = dotProduct(onPlane, cameraPerpendicular)*temp
-        var Y = dotProduct(onPlane, cameraVer)*temp
-        return [parseInt(X+(width/2)), parseInt(Y+(height/2))];
+        var X = dotProduct(onPlane, cameraPerpendicular)*temp+(width/2)
+        var Y = dotProduct(onPlane, cameraVer)*temp+(height/2)
+        return [parseInt(X), parseInt(Y)];
     }else{
         return[width,width];
     }

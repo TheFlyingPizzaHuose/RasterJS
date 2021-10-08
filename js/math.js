@@ -102,5 +102,4 @@ function sort2d(a, b){
 function vector3to2(vector1){
 	return [Math.atan(vector1[1]/vector1[0]), Math.atan(vector1[2]/vectorMagnitude([vector1[0], vector1[1]]))]
 }
-
 export {vector3to2, sort2d, normalize, arrayEqual, vectorMagnitude, dotProduct, vectorAdd, vectorSubtract, vectorScalar, vectorDistance, crossProduct, vectorsToAngle, degToArc};

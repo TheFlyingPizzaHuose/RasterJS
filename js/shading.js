@@ -1,4 +1,4 @@
-import {vectorSubtract, vectorScalar, arrayEqual, vectorAdd} from './math.js';
+import {vectorSubtract, vectorScalar, arrayEqual} from './math.js';
 
 //Generates wireframe from 2d coordinates
 function generateWireframe(coords, width, height){
@@ -76,7 +76,7 @@ function generateZMap(coords, shade, color, width, height, workers){
     shaded = [parseInt(shaded[0]), parseInt(shaded[1]),parseInt(shaded[2]), 255]
 
     //Generates wirframe
-    var lines = new Int32Array(new ArrayBuffer(16))
+    var lines = []
     lines = generateWireframe(coords, width, height);
 
     var pairs = [];
@@ -90,38 +90,6 @@ function generateZMap(coords, shade, color, width, height, workers){
             }
         }
     })
-    //Create shared buffers
-    /*var bufferLength = Int32Array.BYTES_PER_ELEMENT * pairs.length;
-    const sharedBuffer = new SharedArrayBuffer(bufferLength);
-    const pairBuffer = new SharedArrayBuffer(bufferLength);
-    var pairs2 = new Int32Array(sharedBuffer);
-    pairs.forEach((value, index)=>{
-        Atomics.store(pairs2, index, value)
-    })
-
-    //Creates web workers
-    var w1 = workers[0];
-    var w2 = workers[1];
-    var w3 = workers[2];
-    var w4 = workers[3];*/
-
-
-    //Interpolate pairs and run workers
-    /*for(var i=0; i<pairs.length; i+=4){
-        if(pairs[i] != undefined){
-            w1.postMessage([sharedBuffer, pairs2, width]);
-        }
-        if(pairs[i+1] != undefined){
-            w2.postMessage([sharedBuffer, pairs2, width]);
-        }
-        if(pairs[i+2] != undefined){
-            w3.postMessage([sharedBuffer, pairs2, width]);
-        }
-        if(pairs[i+3] != undefined){
-            w4.postMessage([sharedBuffer, pairs2, width]);
-        }
-    }*/
-
     //Interpolate pairs
     pairs.forEach(value=>{
         //Rearrange data (cuz my brain can't be bothered to write it in 1 line)
