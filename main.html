@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <title>RasterJS</title>
     <link type="text/css" rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
 </head>
     <script async type="module" src="main.js" allow="cross-origin-isolated"></script>
-    <body>
+    <body class='customBG'>
         <h1>Welcome to RasterJS v1.5</h1>
         <p style="word-wrap: break-word;">This is a Javascript based Rasterization(3d) program. 
             This program is a work in progress and this is the latest usable version.
@@ -31,8 +32,13 @@
         <br>
         <br>
         <p>
-        Controls:
+        It is strongly recommended that mobile users enter the fullscreen mode via the button bellow for the best experience
         </p>
+        <br>
+        <br>
+        <h3>
+        Controls:
+        </h3>
         <ul>
             <li>Speed Up: Z</li>
             <li>Slow Down: X</li>
@@ -58,29 +64,13 @@
         <br>
         <table class="mainTable" style="display: inline-block;">
             <tr>
-                <td>
+                <td style='width: 40%;'>
+                    <p>Import .obj file:</p>
+                    <input type="file" id="file" style="width:23%">
+                </td>
+                <td style='width: 50%;'>
                     <p>Fov: </p>
                     <input type="range" id="fov" value="100" min='10' max='179'>
-                </td>
-                <td>
-                    <p>Import .obj file:</p>
-                    <input type="file" id="file">
-                </td>
-                <td>
-                    <p>ResolutionX: </p>
-                    <input type="number" id="resolutionX" value="800">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p>Delete OBJ#: </p>
-                    <input type="number" id="OBJind" value="1">
-                    <input type="button" id="delete" value="Delete">
-                </td>
-                <td></td>
-                <td>
-                    <p>ResolutionY: </p>
-                    <input type="number" id="resolutionY" value="430">
                 </td>
             </tr>
             <tr>
@@ -90,27 +80,56 @@
                         <input  type="number" id="B" value='0' max='255'>
                         <input type="number" id="G" value='255' max='255'>
                         <input type="number" id="R" value='0' max='255'>
+                        <div id='colorPick' style='border-radius: 15%;float: right;color: lime; background-color: lime; display: inline; font-size: 20px;'>----</div>
+                    </form>
+                </td> 
+                <td>
+                    <p>Gamma: </p>
+                    <input type="range" id="gamma" value="3" min='1' max='10'>
+                </td> 
+            </tr>
+            <tr>
+                <td>
+                    <form>
+                        <p>OBJ Position: </p>
+                        <input  type="number" id="X" value='0'>
+                        <input type="number" id="Y" value='0'>
+                        <input type="number" id="Z" value='0'>
                     </form>
                 </td>
+                <td>
+                    <p>ResolutionX: </p>
+                    <input type="number" id="resolutionX" value="800">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p>Scale: </p>
+                    <input type="number" id="scale" value='1'>
+                </td>
+                <td>
+                    <p>ResolutionY: </p>
+                    <input type="number" id="resolutionY" value="430">
+                </td>
+            </tr>
+            <tr>
                 <td></td>
                 <td>
                     <p>Sensitivity: </p>
                     <input type="number" id="sens" value="0.1">
                 </td>
             </tr>
-            <tr>
-            </tr>
         </table>
         <table class="mainTable">
             <tr>
                 <td>
-                    <p id="Frames">Frames: </p>
+                    <p id="Frames" style='color: orange'>Frames: </p>
                 </td>
                 <td>
-                    <p id="Framerate">Framerate: </p>
+                    <p id="Framerate" style='color: orange'>Framerate: </p>
                 </td>
                 <td>
-                    <p id="Vertex Count">Vertex Count: </p>
+                    <p id="Vertex Count" style='color: orange'>Vertex Count: </p>
                 </td>
             </tr>
         </table>
@@ -118,8 +137,8 @@
             <source src="./music/Kevin MacLeod _ Arcadia.mp3" type="audio/mpeg">
             Your browser does not support the audio element.
         </audio>
-        <h2>Viewport</h2>
-        <a href="/screenOnly">Go To Fullscreen Site
+        <h2 class="d-inline">Viewport</h2>
+        <a href="/screenOnly"><button value='Submit' class="btn btn-primary d-inline">Fullscreen</button>
         </a>
         <canvas class="screen" id="screen" width="800" height="460"></canvas>
         <canvas id="texture" style="display: hidden"></canvas>

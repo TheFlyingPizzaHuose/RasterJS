@@ -2,7 +2,7 @@
     font-family: Arial, Helvetica, sans-serif;
     color: white;
 }
-body{
+.customBG{
     align-self: center;
     background-color: black;
     overflow: hidden;

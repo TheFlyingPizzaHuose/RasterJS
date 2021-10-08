@@ -4,16 +4,9 @@ import * as objParse from './obj-file-parser/dist/OBJFile.js';
 import {degToArc, vectorAdd, vectorScalar, crossProduct, vectorsToAngle, sort2d, vectorDistance} from './js/math.js';
 import {generateZMap} from './js/shading.js';
 
-const date_ob = new Date();
 var debugMode = false;
 var frameTime = false;
 var frameCap = 1000/60
-
-//Creates URL blob for shading worker
-var blob = new Blob(["importScripts('http://localhost:5000/js/shadingWorker.js')"], { "type": 'application/javascript' });
-var url = window.URL || window.webkitURL;
-var blobUrl = url.createObjectURL(blob);
-var workers = [new Worker(blobUrl),new Worker(blobUrl),new Worker(blobUrl),new Worker(blobUrl)]
 
 //###########################################Variables###########################################
 //Canvas variables
@@ -21,23 +14,48 @@ var ctx = document.getElementById('screen'), c = ctx.getContext("2d"), width = c
 //Debug variables
 var frameCounter=0, frameSinceLastTime=0, vertexCount=0
 //Scene data variables
-var sceneData=[],objectVerticies=[],sortedIndexes=[],starField=[],particles=[],textures=[], sunAngle=(date_ob.getMinutes()/20)*360, gamma=3;
+var sceneData=[],objectVerticies=[],sortedIndexes=[],starField=[],particles=[],textures=[], sunAngle=0, gamma=3;
 //Camera variables 
 var cameraVector=[0,0,0],cameraPer=[],cameraVector3=[],cameraVer=[],cameraLocation=[0, -100, 0],cameraLocationPrevious=[],fov=70,fovLength=1;
 //###########################################Variables###########################################
 
-//Mouse Movement Setup
-ctx.requestPointerLock = ctx.requestPointerLock || ctx.mozRequestPointerLock;
-ctx.requestPointerLock();
-document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock;
-ctx.onclick = function() {
-	ctx.requestPointerLock();
-};
 
 //Hook pointer lock state change events for different browsers
-document.addEventListener('pointerlockchange', lockChangeAlert, false);
-document.addEventListener('mozpointerlockchange', lockChangeAlert, false);
-function lockChangeAlert() {
+if(/^((?!chrome|android).)*safari/i.test(navigator.userAgent)) {
+	var src = document.getElementById("screen");
+	var start=[]
+	var tempCamVec=[]
+	//Gets starting touch position
+	src.addEventListener('touchstart', function(e) {
+		var music = document.getElementById('music');
+		music.play();	
+		tempCamVec=cameraVector
+		// Cache the client X/Y coordinates
+		start[0]=e.touches[0].clientX
+		start[1]=e.touches[0].clientY
+	}, false);
+	//Gets postion relative to old position
+	src.addEventListener('touchmove', function(e) {
+		cameraVector[0]=tempCamVec[0]-(e.touches[0].clientX - start[0])/10*document.getElementById('sens').value
+		cameraVector[1]=tempCamVec[1]+(e.touches[0].clientY - start[1])/10*document.getElementById('sens').value
+	}, false);
+	//Replaced old position
+	src.addEventListener('touchend', function(e) {
+		cameraVector[0]=tempCamVec[0]-(e.touches[0].clientX - start[0])/10*document.getElementById('sens').value
+		cameraVector[1]=tempCamVec[1]+(e.touches[0].clientY - start[1])/10*document.getElementById('sens').value
+	}, false);
+}else{	
+	//Mouse Movement Setup
+	ctx.requestPointerLock = ctx.requestPointerLock || ctx.mozRequestPointerLock;
+	ctx.requestPointerLock();
+	document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock;
+	ctx.onclick = function() {
+		ctx.requestPointerLock();
+	};
+
+	document.addEventListener('pointerlockchange', lockChangeAlert, false);
+	document.addEventListener('mozpointerlockchange', lockChangeAlert, false);
+	function lockChangeAlert() {
 	if (document.pointerLockElement === ctx ||
 		document.mozPointerLockElement === ctx) {
 		var music = document.getElementById('music');
@@ -50,6 +68,7 @@ function lockChangeAlert() {
 function updatePosition(e) {
 	cameraVector[0] += e.movementX*document.getElementById('sens').value;
 	cameraVector[1] -= e.movementY*document.getElementById('sens').value;
+}
 }
 
 //Key press detection
@@ -144,8 +163,8 @@ function display(image){
 //Raster
 function raster(){
 	var TwoDemCoords = [];
-	var result = [];
-	var ZMap = [];
+	var result = new Uint8ClampedArray(new ArrayBuffer(width*height*4))
+	var ZMap = []
 	var ZMapIndexes = [];
 	for(var i=0; i<objectVerticies.length; i++){
 		TwoDemCoords[i] = [];
@@ -291,7 +310,6 @@ function raster(){
 }
 //render method
 function render(){
-
 	//Updates canvas resolution
 	document.getElementById('resolutionX').onchange = function(){
 		ctx.width = document.getElementById('resolutionX').value;
@@ -301,12 +319,22 @@ function render(){
 		ctx.height = document.getElementById('resolutionY').value;
 		height = ctx.height;
 	}
-
 	//draws image
 	display(raster());
 
+	//Updates color picker color
+	//console.log(document.getElementById('colorPick').style.backgroundColor)
+	var colorString = 'rgb('+document.getElementById('R').value+','+
+	document.getElementById('G').value+','+
+	document.getElementById('B').value+')'
+	document.getElementById('colorPick').style.backgroundColor = colorString
+	document.getElementById('colorPick').style.color = colorString
+																
 	frameSinceLastTime++;
 	frameCounter++;
+	gamma=parseInt(document.getElementById('gamma').value)
+	//Changes sun position
+	var date_ob = new Date();
 	sunAngle=(date_ob.getMinutes()/20)*360
 }
 //gets framerate and displays
@@ -321,9 +349,12 @@ function getFramerate(){
 //user import obj
 const inputElement = document.getElementById("file");
 inputElement.addEventListener('change', function(){
-	selfImport(inputElement.files[0], [document.getElementById('R').value,
+	userImport(inputElement.files[0], [document.getElementById('R').value,
 									  document.getElementById('G').value,
-									  document.getElementById('B').value]);
+									  document.getElementById('B').value],
+									  [document.getElementById('X').value,
+									   document.getElementById('Y').value,
+									   document.getElementById('Z').value,], document.getElementById('scale').value);
 }, false);
 //self import file
 function selfImport(file, color, offset=[0,0,0], scale=1, isEmmision=false, isBackground=false, LOD=false)
@@ -380,6 +411,51 @@ function selfImport(file, color, offset=[0,0,0], scale=1, isEmmision=false, isBa
     }
     rawFile.send(null);
 }
+//self import file
+function userImport(file, color, offset=[0,0,0], scale=1, isEmmision=false, isBackground=false, LOD=false)
+{
+	const fr = new FileReader();
+	//convert the file into text
+	fr.addEventListener('load', (event)=>{
+
+		//convert the text into .OBJ object
+		const obj = new objParse.OBJFile(event.target.result);
+		var content = obj.parse().models[0];
+		//Adds verticies to objectVerticies
+		var temp = [];
+		content.vertices.forEach(value=>{
+			temp.push(vectorAdd(vectorScalar(Object.values(value), scale), offset));
+		})
+		objectVerticies.push(temp);
+		//Updates vertex count
+		vertexCount+=temp.length;
+
+		//select faces
+		var objectData = [];
+		content.faces.forEach((value)=>{
+			var indexes = [];
+			//get indexes of verticies for the face
+			value.vertices.forEach((value2)=>{
+				indexes.push(value2.vertexIndex-1);
+			})
+
+			//get color values
+			var R = parseInt(color[0]);
+			var G = parseInt(color[1]);
+			var B = parseInt(color[2]);
+
+			//add face to sceneData
+			var newFace = new face(3, [R, G, B], indexes, temp, isEmmision, isBackground, LOD);
+			objectData.push(newFace);
+		})
+
+		//display that another object has been imported
+		sceneData.push(objectData);
+		console.log('import success');
+		document.getElementById('Vertex Count').textContent = "Vertex Count: " + vertexCount;
+	});
+	fr.readAsText(file);
+}
 //copy paste model
 function copyPaste(model, vertices, offset=[0,0,0], scale=1, isEmmision=false, isBackground=false, LOD=false, randomColor=false){
 	//Adds verticies to objectVerticies
@@ -407,7 +483,7 @@ function copyPaste(model, vertices, offset=[0,0,0], scale=1, isEmmision=false, i
 	document.getElementById('Vertex Count').textContent = "Vertex Count: " + vertexCount;
 }
 //Self import texture
-function importTexture(path, alias){
+function importTexture(path, ind){
 	var Ctx = document.getElementById('texture')
 	var C = Ctx.getContext('2d')
 	//Get image
@@ -417,17 +493,12 @@ function importTexture(path, alias){
 		Ctx.width = img.width;
 		Ctx.height = img.height;
 		C.drawImage(img, 0, 0);
-		textures.push({image: C.getImageData(0, 0, img.width, img.height)});
+		textures[ind] = {image: C.getImageData(0, 0, img.width, img.height)};
 		Ctx.width = 1;
 		Ctx.height = 1;
 	};
 	img.src = path;
 	console.log('texture ' + path + ' imported');
-}
-document.getElementById('delete').onclick = function(){
-	var tempi = parseInt(document.getElementById('OBJind').value) -1;
-	sceneData.splice(tempi, 1);
-	objectVerticies.splice(tempi,1);
 }
 //###########################################Import functions###########################################
 
@@ -446,9 +517,10 @@ load.onload = function() {
 	c.drawImage(load, 0, 0);
 };
 load.src = './textures/loading.png';
-importTexture('./textures/debug.png')
-importTexture('./textures/fireball.png')
-importTexture('./textures/Asteroid.PNG')
+textures=new Array(3)
+importTexture('./textures/debug.png',0)
+importTexture('./textures/fireball.png',1)
+importTexture('./textures/Asteroid.png',2)
 
 selfImport('./models/Sun.obj', [255, 255, 255], [-3000,3000,1800], 80, true, true);
 selfImport('./models/Sun.obj', [255, 100, 100], [0,0,0], 5);
