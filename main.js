@@ -1,7 +1,7 @@
 import {face, particle} from './js/classes.js';
 import {camera2to3, camera2ToPerpendicular, vertexToPixel} from './js/raster.js';
 import * as objParse from './obj-file-parser/dist/OBJFile.js';
-import {degToArc, vectorAdd, vectorScalar, crossProduct, vectorsToAngle, sort2d, vectorDistance} from './js/math.js';
+import {degToArc, vectorAdd, vectorScalar, crossProduct, vectorsToAngle, sort2d, vectorDistance, vectorMagnitude} from './js/math.js';
 import {generateZMap} from './js/shading.js';
 
 var debugMode = false;
@@ -44,6 +44,15 @@ if(/^((?!chrome|android).)*safari/i.test(navigator.userAgent)) {
 		cameraVector[0]=tempCamVec[0]-(e.touches[0].clientX - start[0])/10*document.getElementById('sens').value
 		cameraVector[1]=tempCamVec[1]+(e.touches[0].clientY - start[1])/10*document.getElementById('sens').value
 	}, false);
+	//Key board event listeners	
+	document.addEventListener('keydown', logKeyMobile);
+	//Create less starfield
+	for(var i=0; i<500; i++){
+		starField.push([parseInt((Math.random()-0.5)*1000), 
+						parseInt((Math.random()-0.5)*1000), 
+						parseInt((Math.random()-0.5)*1000), 
+						[255, (Math.random()*500), (Math.random()*500), 255], ])
+	}
 }else{	
 	//Mouse Movement Setup
 	ctx.requestPointerLock = ctx.requestPointerLock || ctx.mozRequestPointerLock;
@@ -65,79 +74,126 @@ if(/^((?!chrome|android).)*safari/i.test(navigator.userAgent)) {
 		document.removeEventListener("mousemove", updatePosition, false);
 	}
 }
-function updatePosition(e) {
-	cameraVector[0] += e.movementX*document.getElementById('sens').value;
-	cameraVector[1] -= e.movementY*document.getElementById('sens').value;
-}
+
+	//Key board event listeners	
+	document.addEventListener('keydown', logKey);
+	document.addEventListener('keyup', logKey2);
+	function updatePosition(e) {
+		cameraVector[0] += e.movementX*document.getElementById('sens').value;
+		cameraVector[1] -= e.movementY*document.getElementById('sens').value;
+	}
+	//Create starfield
+	for(var i=0; i<4000; i++){
+		starField.push([parseInt((Math.random()-0.5)*1000), 
+						parseInt((Math.random()-0.5)*1000), 
+						parseInt((Math.random()-0.5)*1000), 
+						[255, (Math.random()*500), (Math.random()*500), 255], ])
+	}
 }
 
 //Key press detection
 var moveForward, moveBackward, moveLeft, moveRight, moveUp, moveDown, tiltLeft, tiltRight, increaseSpeed, decreaseSpeed;
 var movementSpeed = 1;
-document.addEventListener('keydown', logKey);
-document.addEventListener('keyup', logKey2);
 function logKey(e) {
-	if(e.code == 'KeyW'){
-		moveForward = true;
-	}
-	if(e.code == 'KeyS'){
-		moveBackward = true;
-	}
-	if(e.code == 'KeyA'){
-		moveLeft = true;
-	}
-	if(e.code == 'KeyD'){
-		moveRight = true;
-	}
-	if(e.code == 'KeyQ'){
-		tiltLeft = true;
-	}
-	if(e.code == 'KeyE'){
-		tiltRight = true;
-	}
-	if(e.code == 'Space'){
-		moveUp = true;
-	}
-	if(e.code == 'ShiftLeft'){
-		moveDown = true;
-	}
-	if(e.code == 'KeyZ'){
-		increaseSpeed = true;
-	}
-	if(e.code == 'KeyX'){
-		decreaseSpeed = true;
+	switch(e.code){
+		case 'KeyW':
+			moveForward = true;
+			break;	
+		case 'KeyS':
+			moveBackward = true;
+			break;
+		case 'KeyA':
+			moveLeft = true;
+			break;
+		case 'KeyD':
+			moveRight = true;
+			break;
+		case 'KeyQ':
+			tiltLeft = true;
+			break;
+		case 'KeyE':
+			tiltRight = true;
+			break;	
+		case 'Space':
+			moveUp = true;
+			break;
+		case 'ShiftLeft':
+			moveDown = true;
+			break;
+		case 'KeyZ':
+			increaseSpeed = true;
+			break;
+		case 'KeyX':
+			decreaseSpeed = true;
+			break;
 	}
 }
 function logKey2(e) {
-	if(e.code == 'KeyW'){
-		moveForward = false;
+	switch(e.code){
+		case 'KeyW':
+			moveForward = false;
+			break;	
+		case 'KeyS':
+			moveBackward = false;
+			break;
+		case 'KeyA':
+			moveLeft = false;
+			break;
+		case 'KeyD':
+			moveRight = false;
+			break;
+		case 'KeyQ':
+			tiltLeft = false;
+			break;
+		case 'KeyE':
+			tiltRight = false;
+			break;	
+		case 'Space':
+			moveUp = false;
+			break;
+		case 'ShiftLeft':
+			moveDown = false;
+			break;
+		case 'KeyZ':
+			increaseSpeed = false;
+			break;
+		case 'KeyX':
+			decreaseSpeed = false;
+			break;
 	}
-	if(e.code == 'KeyS'){
-		moveBackward = false;
-	}
-	if(e.code == 'KeyA'){
-		moveLeft = false;
-	}
-	if(e.code == 'KeyD'){
-		moveRight = false;
-	}
-	if(e.code == 'KeyQ'){
-		tiltLeft = false;
-	}
-	if(e.code == 'KeyE'){
-		tiltRight = false;
-	}
-	if(e.code == 'Space'){
-		moveUp = false;
-	}
-	if(e.code == 'ShiftLeft'){
-		moveDown = false;
-	}
-	if(e.code == 'KeyZ'){
-		increaseSpeed = false;
-	}
-	if(e.code == 'KeyX'){
-		decreaseSpeed = false;
+}
+function logKeyMobile(e) {
+	switch(e.code){
+		case 'KeyW':
+			moveForward = moveForward? false: true;
+			break;	
+		case 'KeyS':
+			moveBackward = moveBackward? false: true;
+			break;
+		case 'KeyA':
+			moveLeft = moveLeft? false: true;
+			break;
+		case 'KeyD':
+			moveRight = moveRight? false: true;
+			break;
+		case 'KeyQ':
+			tiltLeft = tiltLeft? false: true;
+			break;
+		case 'KeyE':
+			tiltRight = tiltRight? false: true;
+			break;	
+		case 'Space':
+			moveUp = moveUp? false: true;
+			break;
+		case 'ShiftLeft':
+			moveDown = moveDown? false: true;
+			break;
+		case 'KeyZ':
+			increaseSpeed = increaseSpeed? false: true;
+			break;
+		case 'KeyX':
+			decreaseSpeed = decreaseSpeed? false: true;
+			break;
 	}
 }
 
@@ -183,12 +239,14 @@ function raster(){
 	}
 
 	//Camera angle
-	tiltLeft? cameraVector[2]+=10: nothing();
-	tiltRight? cameraVector[2]-=10: nothing();
+	tiltLeft? cameraVector[2]-=10*document.getElementById('sens').value: nothing();
+	tiltRight? cameraVector[2]+=10*document.getElementById('sens').value: nothing();
 	cameraVector3 = camera2to3(cameraVector);
 	cameraPer = camera2ToPerpendicular(cameraVector);
 	cameraVer = crossProduct(cameraVector3, cameraPer);
 	cameraVector3=vectorScalar(cameraVector3, fovLength);
+	cameraPer = vectorAdd(vectorScalar(cameraPer, Math.cos(degToArc(cameraVector[2]))) , vectorScalar(cameraVer, Math.sin(degToArc(cameraVector[2]))))
+	cameraVer = crossProduct(cameraVector3, cameraPer);
 
 	//Camera movement
 	cameraMove();
@@ -323,7 +381,6 @@ function render(){
 	display(raster());
 
 	//Updates color picker color
-	//console.log(document.getElementById('colorPick').style.backgroundColor)
 	var colorString = 'rgb('+document.getElementById('R').value+','+
 	document.getElementById('G').value+','+
 	document.getElementById('B').value+')'
@@ -333,6 +390,7 @@ function render(){
 	frameSinceLastTime++;
 	frameCounter++;
 	gamma=parseInt(document.getElementById('gamma').value)
+	document.getElementById('keys').textContent = ''
 	//Changes sun position
 	var date_ob = new Date();
 	sunAngle=(date_ob.getMinutes()/20)*360
@@ -564,13 +622,6 @@ setTimeout(function(){
 		//Create fireballs
 		for(var i=0; i<50; i++){
 			particles.push(new particle(30000, vectorScalar(camera2to3([Math.random()*360, Math.random()*360]), 410), [0,100000], 1, true))
-		}
-		//Create starfield
-		for(var i=0; i<4000; i++){
-			starField.push([parseInt((Math.random()-0.5)*1000), 
-							parseInt((Math.random()-0.5)*1000), 
-							parseInt((Math.random()-0.5)*1000), 
-							[255, (Math.random()*500), (Math.random()*500), 255], ])
 		}
 		fov = document.getElementById('fov').value
 		if(debugMode != false){ 
