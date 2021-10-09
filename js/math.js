@@ -16,13 +16,22 @@ function vectorAdd(vector1, vector2){
 	return result;
 }
 
-//gets distance of two points 100%
+//gets distance of two points PIECEWISE 100%
 function vectorDistance(point1, point2){
 	var sum = 0;
 	point1.forEach((value,i)=>{
 		sum+=Math.pow(value-point2[i], 2);
 	})
 	return sum;
+}
+
+//gets distance of two points true 100%
+function vectorDistanceTrue(point1, point2){
+	var sum = 0;
+	point1.forEach((value,i)=>{
+		sum+=Math.pow(value-point2[i], 2);
+	})
+	return Math.sqrt(sum);
 }
 
 //calculate crossProduct 100%
@@ -102,4 +111,4 @@ function sort2d(a, b){
 function vector3to2(vector1){
 	return [Math.atan(vector1[1]/vector1[0]), Math.atan(vector1[2]/vectorMagnitude([vector1[0], vector1[1]]))]
 }
-export {vector3to2, sort2d, normalize, arrayEqual, vectorMagnitude, dotProduct, vectorAdd, vectorSubtract, vectorScalar, vectorDistance, crossProduct, vectorsToAngle, degToArc};
+export {vectorDistanceTrue, vector3to2, sort2d, normalize, arrayEqual, vectorMagnitude, dotProduct, vectorAdd, vectorSubtract, vectorScalar, vectorDistance, crossProduct, vectorsToAngle, degToArc};
