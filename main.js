@@ -1,7 +1,7 @@
 import {face, particle} from './js/classes.js';
 import {camera2to3, camera2ToPerpendicular, vertexToPixel} from './js/raster.js';
 import * as objParse from './obj-file-parser/dist/OBJFile.js';
-import {degToArc, vectorAdd, vectorScalar, crossProduct, vectorsToAngle, sort2d, vectorDistance, vectorMagnitude} from './js/math.js';
+import {vectorDistanceTrue, degToArc, vectorAdd, vectorScalar, crossProduct, vectorsToAngle, sort2d, vectorDistance} from './js/math.js';
 import {generateZMap} from './js/shading.js';
 
 var debugMode = false;
@@ -244,9 +244,10 @@ function raster(){
 	cameraVector3 = camera2to3(cameraVector);
 	cameraPer = camera2ToPerpendicular(cameraVector);
 	cameraVer = crossProduct(cameraVector3, cameraPer);
-	cameraVector3=vectorScalar(cameraVector3, fovLength);
+	//Calculates tilt
 	cameraPer = vectorAdd(vectorScalar(cameraPer, Math.cos(degToArc(cameraVector[2]))) , vectorScalar(cameraVer, Math.sin(degToArc(cameraVector[2]))))
 	cameraVer = crossProduct(cameraVector3, cameraPer);
+	cameraVector3=vectorScalar(cameraVector3, fovLength);
 
 	//Camera movement
 	cameraMove();
@@ -309,7 +310,8 @@ function raster(){
 			var coords = vertexToPixel(value.position, temp, cameraVector3, cameraPer, width, height, cameraVer);
 			//Checks if coord is outside of view
 			if(0 < coords[0] && coords[0] < width && 0 < coords[1] && coords[1] < height){
-				var appSizeRatio = value.size/(Math.PI*2*vectorDistance(temp, value.position)*(fov/360))
+				var appSizeRatio = value.size/(Math.PI*2*vectorDistanceTrue(temp, value.position)*(fov/360))
+				appSizeRatio= appSizeRatio>2? 1:appSizeRatio;
 				var texWid = textures[value.textureIndex].image.width
 				var texHet = textures[value.textureIndex].image.height
 				var texCol = textures[value.textureIndex].image.data
@@ -617,11 +619,11 @@ setTimeout(function(){
 					copyPaste(sceneData[6], objectVerticies[6], position, sclrurer, false, false, lod, true)
 					break;
 			}
-			particles.push(new particle(50, position, [1000, 5000], 2, false))
+			particles.push(new particle(1.5, position, [1000, 1000000000], 2, false))
 		}
 		//Create fireballs
 		for(var i=0; i<50; i++){
-			particles.push(new particle(30000, vectorScalar(camera2to3([Math.random()*360, Math.random()*360]), 410), [0,100000], 1, true))
+			particles.push(new particle(30000, vectorScalar(camera2to3([Math.random()*360, Math.random()*360]), 200000), [0,200001], 1, true))
 		}
 		fov = document.getElementById('fov').value
 		if(debugMode != false){ 
