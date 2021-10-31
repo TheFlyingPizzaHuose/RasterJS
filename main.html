@@ -8,7 +8,7 @@
 </head>
     <script async type="module" src="main.js" allow="cross-origin-isolated"></script>
     <body class='customBG'>
-        <h1>Welcome to RasterJS v1.6</h1>
+        <h1>Welcome to RasterJS v1.7</h1>
         <p style="word-wrap: break-word;">This is a Javascript based Rasterization(3d) program. 
             This program is a work in progress and this is the latest usable version.
         </p>
@@ -47,12 +47,13 @@
             <li>Left: A</li>
             <li>Right: D</li>
             <li>Up: Space</li>
+            <li>Tilt Left: Q</li>
+            <li>Tilt Right: E</li>
             <li>Down: Left Shift</li>
             <li>Camera Look Around (PC): Left Click and Move Mouse</li>
             <li>Camera Look Around (Mobile): Tap and Drag</li>
-            <li>Tilt Left: Q</li>
-            <li>Tilt Right: E</li>
             <li>Stop Camera Look Around: ESC</li>
+            <li>Hide/Unhide Settings (Recommended in fullscreen mode): M</li>
         </ul>
         <br>
         <br>
@@ -139,10 +140,10 @@
             Your browser does not support the audio element.
         </audio>
         <h2 class="d-inline">Viewport</h2>
-        <a href="/screenOnly"><button value='Submit' class="btn btn-primary d-inline">Fullscreen</button>
+        <a href="/screenOnly" id='homeButton'><button value='Submit' class="btn btn-primary d-inline">Fullscreen</button>
         </a>
-        <p style='display: inline;'>Click For Mobile Keyboard Input: </p>
-        <input type="text" id="keys" style='float: none; width: 20px;'>
+        <p style='display: inline;' id='inputLabel'>Click For Mobile Keyboard Input: </p>
+        <input type="text" id="keys" style='width: 20px;'>
         <canvas class="screen" id="screen" width="800" height="460"></canvas>
         <canvas id="texture" style="display: hidden"></canvas>
     </body>

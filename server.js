@@ -25,11 +25,13 @@ app.get('/', (req,res)=>{
 
 app.get('/main', (req, res) => {
   readWriteSync();
-  res.header("Cross-Origin-Embedder-Policy", "require-corp");
-  res.header("Cross-Origin-Opener-Policy", "same-origin");
+  res.header('Cross-Origin-Opener-Policy', 'same-origin');
+  res.header('Cross-Origin-Embedder-Policy', 'require-corp');
   res.sendFile(path.join(__dirname + '/main.html'));
 });
 app.get('/screenOnly', (req, res)=>{
+  res.header('Cross-Origin-Opener-Policy', 'same-origin');
+  res.header('Cross-Origin-Embedder-Policy', 'require-corp');
   res.sendFile(path.join(__dirname + '/fullscreen.html'));
 })
 
