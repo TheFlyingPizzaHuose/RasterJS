@@ -1,4 +1,5 @@
-import {vectorSubtract, crossProduct, normalize, vectorScalar, vectorAdd, vectorDistance} from'./math.js';
+import {vectorSubtract, crossProduct, normalize, vectorScalar, vectorAdd, vectorDistance, vectorDistanceTrue, vectorsToAngle} from'./math.js';
+import {camera2to3} from './raster.js'
 
 class face{
     constructor(roughness, color, vS, verticies, isEmmision, isBackground, LOD){
@@ -24,13 +25,25 @@ class face{
     get lod(){
         return this.lod();
     }
+    get backfaceCull(){
+        return this.backfaceCull()
+    }
+    get selfShade(){
+        return this.selfShade()
+    }
     lod(cameraLocation){
         if(this.minLod==false){
             return true
         }else{
             var dist = vectorDistance(this.center, cameraLocation)
-            return  dist>this.minLod && dist<this.maxLod? true: false
+            return  dist>this.minLod*this.minLod && dist<this.maxLod*this.maxLod? true: false
         }
+    }
+    backfaceCull(cameraVector, fov){
+        return vectorsToAngle(cameraVector, this.normal)/Math.PI < (0.5+(fov/360))
+    }
+    selfShade(sunAngle, gamma){
+        return this.isEmmision? 1: gamma/(1+Math.exp((vectorsToAngle(this.normal, camera2to3([-50, sunAngle]))/Math.PI)*this.roughness));
     }
 }
 
@@ -52,10 +65,10 @@ class particle{
     }
     lod(cameraLocation){
         if(this.minLod==false){
-            return true
+            return [true, vectorDistanceTrue(this.position, cameraLocation)]
         }else{
-            var dist = vectorDistance(this.position, cameraLocation)
-            return  (dist>this.minLod && dist<this.maxLod)? true: false
+            var dist = vectorDistanceTrue(this.position, cameraLocation)
+            return [(dist>this.minLod && dist<this.maxLod)? true: false, dist]
         }
     }
 }
