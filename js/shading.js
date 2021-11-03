@@ -1,17 +1,4 @@
-import {arrayEqual} from './math.js';
-
-//Generates wireframe from 2d coordinates
-function generateWireframe(coords, width, height){
-    var line1 = [];
-    if(checkTriangleCull(coords, width, height)){
-        line1 = generateLine(coords[0], coords[1], height);
-        var line2 = generateLine(coords[0], coords[2], height);
-        var line3 = generateLine(coords[1], coords[2], height);
-        line1[0] = (line1[0].concat(line2[0])).concat(line3[0])
-        line1[1] = (line1[1].concat(line2[1])).concat(line3[1])
-    }
-    return line1;
-}
+import {sort2dReverse, vectorSubtract, vectorScalar, vectorAdd} from './math.js';
 
 //Checks if entire triangle is outside of camera frustum
 function checkTriangleCull(coords, cull, cull2){
@@ -28,56 +15,43 @@ function checkTriangleCull(coords, cull, cull2){
     }
 }
 
-//Interpolates between two points and returns the values
-function generateLine(point1, point2, cull){
-    var result = [[],[]];
-
-    //Interpolates
-    if(arrayEqual(point1, point2)){
-        result[0]=[parseInt(point1[0])]
-        result[1]=[parseInt(point1[1])];
+//Generates an array of pairs defining the lines that comprise the triangle on the screen
+function generateZMap(coords, width, height, textCoords){
+    if(checkTriangleCull(coords, width, height)){
+        //Generates wirframe
+        var pairs = []
+        var finalTexCords = []
+        //Sorts screen positions and texture coordinates according to y screen positions
+        var sortedCoords = coords.map((value, index) => [value[1], [value[0], textCoords[index]]]).sort(sort2dReverse)
+        var ycoords = [sortedCoords[0][0],sortedCoords[1][0],sortedCoords[2][0]]
+        var xcoords = [sortedCoords[0][1][0],sortedCoords[1][1][0],sortedCoords[2][1][0]]
+        var texCordStart = [sortedCoords[0][1][1],sortedCoords[1][1][1],sortedCoords[2][1][1]]
+        var slopes = [(xcoords[1]-xcoords[0])/(ycoords[1]-ycoords[0]), 
+                      (xcoords[2]-xcoords[0])/(ycoords[2]-ycoords[0]),
+                      (xcoords[2]-xcoords[1])/(ycoords[2]-ycoords[1])]
+        var texCordSlopes = [vectorScalar(vectorSubtract(texCordStart[1], texCordStart[0]), 1/(ycoords[1]-ycoords[0])),
+                             vectorScalar(vectorSubtract(texCordStart[2], texCordStart[0]), 1/(ycoords[2]-ycoords[0])),
+                             vectorScalar(vectorSubtract(texCordStart[2], texCordStart[1]), 1/(ycoords[2]-ycoords[1])),]
+        xcoords = [sortedCoords[0][1][0],sortedCoords[0][1][0],sortedCoords[1][1][0]]
+        texCordStart = [sortedCoords[0][1][1],sortedCoords[0][1][1],sortedCoords[1][1][1]]
+        var minY = Math.min(...ycoords)
+        for(var x=0;x<3;x++){
+            for(var i=ycoords[x<2?0:1]-minY; i<ycoords[x<1?1:2]-minY; i++){
+                if(ycoords[x<1?1:2]-minY>height*2){
+                    break;
+                }else{
+                    pairs[i] != undefined? pairs[i].push(parseInt(xcoords[x])):pairs[i] = [parseInt(xcoords[x])]
+                    finalTexCords[i] != undefined? finalTexCords[i].push(texCordStart[x]):finalTexCords[i] = [texCordStart[x]]
+                    texCordStart[x] = vectorAdd(texCordStart[x], texCordSlopes[x])
+                    xcoords[x]+=slopes[x]
+                }
+            }
+        }
+        pairs = pairs.map((value,index) => value.concat(finalTexCords[index].concat([index+minY])))
+        return pairs;
     }else{
-        //Gets begining coord
-        var currentX = point2[1]>point1[1]?point1[0]:point2[0]
-        var currentY=point2[1]>point1[1]?point1[1]:point2[1]
-        var xend = point2[1]>point1[1]?point2[0]:point1[0]
-        var yend = point2[1]>point1[1]?point2[1]:point1[1]
-        var slope = (xend-currentX)/(yend-currentY)
-        if(yend-currentY<cull*2){
-            for(var i=currentY; i<=yend; i++){
-                result[0].push(parseInt(currentX));
-                result[1].push(parseInt(i))
-                currentX+=slope;
-            }
-        }
+        return [];
     }
-    return result;
 }
 
-//Generates a depth map based on 2d coordinates and 3d coordinates
-function generateZMap(coords, width, height){
-
-    //Generates wirframe
-    var lines = [[],[]]
-    var temp = generateWireframe(coords, width, height);
-    lines[0] = lines[0].concat(temp[0])
-    lines[1] = lines[1].concat(temp[1])
-
-    var pairs = [];
-    //Find pairs
-    lines[1].forEach((value, index)=>{
-        for(var i = index+1; i < lines[1].length; i++){
-            if(value == lines[1][i]){
-                pairs.push([lines[0][index], lines[0][i], value]);
-                break;
-            }else if(i == lines[1].length){
-                pairs.push([lines[0][index], lines[0][index], value]);
-                break;
-            }
-        }
-    })
-
-    return pairs;
-}
-
-export {generateZMap, generateWireframe, checkTriangleCull};
+export {generateZMap, checkTriangleCull};

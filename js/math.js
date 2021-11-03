@@ -108,6 +108,15 @@ function sort2d(a, b){
 	}
 }
 
+//2d sort
+function sort2dReverse(a, b){
+	if(a[0] === b[0]){
+		return 0;
+	}else{
+		return (a[0] < b[0])? -1 : 1
+	}
+}
+
 //Converts 3d coordinates to spherical coordinates
 function vector3to2(vector1){
 	return [Math.atan(vector1[1]/vector1[0]), Math.atan(vector1[2]/vectorMagnitude([vector1[0], vector1[1]]))]
@@ -117,4 +126,9 @@ function vector3to2(vector1){
 function clamp(min, max, val){
 	return val>max?max:val<min?min:val
 }
-export {clamp, vectorDistanceTrue, vector3to2, sort2d, normalize, arrayEqual, vectorMagnitude, dotProduct, vectorAdd, vectorSubtract, vectorScalar, vectorDistance, crossProduct, vectorsToAngle, degToArc};
+
+//Converts X,Y values to index value
+function xyToIndex(X,Y,width){
+	return parseInt(X+(Y*width))*4
+}
+export {xyToIndex, sort2dReverse, clamp, vectorDistanceTrue, vector3to2, sort2d, normalize, arrayEqual, vectorMagnitude, dotProduct, vectorAdd, vectorSubtract, vectorScalar, vectorDistance, crossProduct, vectorsToAngle, degToArc};

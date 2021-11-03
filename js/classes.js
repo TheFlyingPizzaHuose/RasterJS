@@ -2,13 +2,15 @@ import {vectorSubtract, crossProduct, normalize, vectorScalar, vectorAdd, vector
 import {camera2to3} from './raster.js'
 
 class face{
-    constructor(roughness, color, vS, verticies, isEmmision, isBackground, LOD){
-        //each element is an array with 7 elements [[R, G, B], vertex1, vertex2, vertex3, normal, sphereOfInfluence, roughness, edgeVector1, edgeVector2]
+    constructor(roughness, vS, verticies, isEmmision, isBackground, LOD, textCordS, textureIndex){
         this.roughness = roughness;
-        this.color = color;
         this.v1 = vS[0];
         this.v2 = vS[1];
         this.v3 = vS[2];
+        this.textCordS1 = textCordS[0];
+        this.textCordS2 = textCordS[1];
+        this.textCordS3 = textCordS[2];
+        this.textureIndex = textureIndex
         this.e1 = vectorSubtract(verticies[this.v2], verticies[this.v1]);
         this.e2 = vectorSubtract(verticies[this.v3], verticies[this.v1]);
         this.normal = normalize(crossProduct(this.e2, this.e1));
@@ -16,8 +18,8 @@ class face{
         this.isEmmision = isEmmision;
         this.isBackground = isBackground
         if(LOD != false){
-            this.minLod = LOD[0]; 
-            this.maxLod = LOD[1];
+            this.minLod = LOD[0]*LOD[0]; 
+            this.maxLod = LOD[1]*LOD[1];
         }else{
             this.minLod= false;
         }
@@ -36,14 +38,14 @@ class face{
             return true
         }else{
             var dist = vectorDistance(this.center, cameraLocation)
-            return  dist>this.minLod*this.minLod && dist<this.maxLod*this.maxLod? true: false
+            return  dist>this.minLod && dist<this.maxLod? true: false
         }
     }
     backfaceCull(cameraVector, fov){
         return vectorsToAngle(cameraVector, this.normal)/Math.PI < (0.5+(fov/360))
     }
     selfShade(sunAngle, gamma){
-        return this.isEmmision? 1: gamma/(1+Math.exp((vectorsToAngle(this.normal, camera2to3([-50, sunAngle]))/Math.PI)*this.roughness));
+        return this.isEmmision? gamma: gamma/(1+Math.exp((vectorsToAngle(this.normal, camera2to3([-50, sunAngle]))/Math.PI)*this.roughness));
     }
 }
 
