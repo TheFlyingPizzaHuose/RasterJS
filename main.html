@@ -8,14 +8,15 @@
 </head>
     <script async type="module" src="main.js" allow="cross-origin-isolated"></script>
     <body class='customBG'>
-        <h1>Welcome to RasterJS v1.7</h1>
+        <h1>Welcome to RasterJS v1.8</h1>
         <p style="word-wrap: break-word;">This is a Javascript based Rasterization(3d) program. 
             This program is a work in progress and this is the latest usable version.
         </p>
         <br>
         <br>
         <p>
-        What you see on the screen bellow is a pink planet with it's asteriod ring. The asteroids are randomly generated
+        What you see on the screen bellow is a planet in the midst of being obliterated with it's asteriod ring. Since the recent texture
+        mapping feature hasn't been optimized, moving close to objects will result in major performance drops so beware.
         </p>
         <br>
         <br>
@@ -135,15 +136,14 @@
                 </td>
             </tr>
         </table>
+        <h2 class='d-inline'>Viewport</h2>
+        <a href="/screenOnly" id='homeButton'><button value='Submit' class="btn btn-primary d-inline">Fullscreen</button></a>
+        <p style='display: inline;' id='inputLabel'>Click For Mobile Keyboard Input: </p>
+        <input type="text" id="keys" style='width: 20px; display: inline; float: none'>
         <audio controls loop id="music" style='display: none'>
             <source src="./music/Kevin MacLeod _ Arcadia.mp3" type="audio/mpeg">
             Your browser does not support the audio element.
         </audio>
-        <h2 class="d-inline">Viewport</h2>
-        <a href="/screenOnly" id='homeButton'><button value='Submit' class="btn btn-primary d-inline">Fullscreen</button>
-        </a>
-        <p style='display: inline;' id='inputLabel'>Click For Mobile Keyboard Input: </p>
-        <input type="text" id="keys" style='width: 20px;'>
         <canvas class="screen" id="screen" width="800" height="460"></canvas>
         <canvas id="texture" style="display: hidden"></canvas>
     </body>

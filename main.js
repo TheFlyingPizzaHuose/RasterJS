@@ -1,7 +1,7 @@
 import {face, particle} from './js/classes.js';
 import {camera2to3, vertexToPixel} from './js/raster.js';
 import * as objParse from './obj-file-parser/dist/OBJFile.js';
-import {degToArc, vectorAdd, vectorScalar, sort2d, vectorDistance} from './js/math.js';
+import {xyToIndex, degToArc, vectorAdd, vectorScalar, sort2d, vectorDistance, vectorSubtract} from './js/math.js';
 import {generateZMap} from './js/shading.js';
 
 var debugMode = false;
@@ -12,12 +12,111 @@ var frameCap = 1000/60
 //Canvas variables
 var ctx = document.getElementById('screen'), c = ctx.getContext("2d"), width = ctx.width, height = ctx.height;
 //Debug variables
-var frameCounter=0, frameSinceLastTime=0, vertexCount=0, hasErr = false, countsSinceLastErr = 0, showDebug=true;
+var frameCounter=0,frameSinceLastTime=0,vertexCount=0,hasErr=false,countsSinceLastErr=0,showDebug=true;
 //Scene data variables
-var sceneData=[],objectVerticies=[],objectAnimate=[],sortedIndexes=[],starField=[],particles=[],textures=[], sunAngle=0, gamma=3;
+var sceneData=[],objectVerticies=[],objectAnimate=[],sortedIndexes=[],starField=[],particles=[],textures=[],textCoords=[],sunAngle=0,gamma=3;
 //Camera variables 
-var cameraPer=[1,0,0],cameraVector3=[0,1,0],cameraVer=[0,0,-1],cameraLocation=[0, -100, 0],cameraLocationPrevious=[],fov=70,fovLength=1;
+var cameraPer=[0,1,0],cameraVector3=[-1,0,0],cameraVer=[0,0,-1],cameraLocation=[200,0,-10],cameraLocationPrevious=[],fov=70,fovLength=1;
 //###########################################Variables###########################################
+
+//Loading Screen
+var load = new Image();
+load.onload = function() {
+	c.drawImage(load, 0, 0);
+};
+load.src = './textures/loading.png';
+textures=[]
+importTexture('./textures/fireball.png',0,'./textures/fireballAlpha.jpg')
+importTexture('./textures/Asteroid.png',1,'./textures/AsteroidAlpha.jpg')
+importTexture('./textures/fireball2.png',2,'./textures/fireballAlpha.jpg')
+importTexture('./textures/Saturn.png',3,'./textures/SaturnAlpha.png')
+importTexture('./textures/Dirt.jpg',4,'./textures/DirtAlpha.jpg')
+importTexture('./textures/DirtAlpha.jpg',5,'./textures/DirtAlpha.jpg')
+
+selfImport({file: './models/Sun.obj', offset: [-3000,3000,1800], scale: 80, isEmmision: true, isBackground: true, textureIndex: 5});
+selfImport({file: './models/Planet.obj', scale: 5, isEmmision: true , textureIndex: 3});
+selfImport({file: './models/1.obj', LOD: [100000000,100000001], textureIndex: 4});
+selfImport({file: './models/2.obj', LOD: [100000000,100000001], textureIndex: 4});
+selfImport({file: './models/3.obj', LOD: [100000000,100000001], textureIndex: 4});
+selfImport({file: './models/4.obj', LOD: [100000000,100000001], textureIndex: 4});
+selfImport({file: './models/5.obj', LOD: [100000000,100000001], textureIndex: 4});
+
+//Gives time for texture import
+setTimeout(function(){
+	console.log(textures)
+	//creates asteroid field
+	for(var i=0; i<500; i++){
+		var selectModel = parseInt(Math.random()*6)
+		var distance = 70*((Math.random()+4)/5)
+		var angle = Math.random()*2*Math.PI
+		var position = [distance*Math.sin(angle), distance*Math.cos(angle), (Math.random()-0.5)*2]
+		var lod = [0.0001,30]
+		var sclrurer =  0.1*(Math.random()+1)/2
+		switch(selectModel){
+			case 1:
+				copyPaste(sceneData[2], objectVerticies[2], position, sclrurer, false, false, lod, textCoords[2])
+				break;
+			case 2:
+				copyPaste(sceneData[3], objectVerticies[3], position, sclrurer, false, false, lod, textCoords[3])
+				break;
+			case 3:
+				copyPaste(sceneData[4], objectVerticies[4], position, sclrurer, false, false, lod, textCoords[4])
+				break;
+			case 4:
+				copyPaste(sceneData[5], objectVerticies[5], position, sclrurer, false, false, lod, textCoords[5])
+				break;
+			case 5:
+				copyPaste(sceneData[6], objectVerticies[6], position, sclrurer, false, false, lod, textCoords[6])
+				break;
+		}
+		particles.push(new particle(1.5, position, [30, 100], 1, false))
+	}
+	//Create starfield
+	for(var i=0; i<4000; i++){
+		starField.push([parseInt((Math.random()-0.5)*1000), 
+						parseInt((Math.random()-0.5)*1000), 
+						parseInt((Math.random()-0.5)*1000), 
+						[(Math.random()*500), (Math.random()*500), (Math.random()*500), 255],false])
+	}
+	//creates dust field
+	for(var i=0; i<1700; i++){
+		var distance = 70*((Math.random()+4)/5)
+		var angle = Math.random()*2*Math.PI
+		var colVaria = Math.random()*50-25
+		starField.push([distance*Math.sin(angle), distance*Math.cos(angle), (Math.random()-0.5)*2, 
+					   [parseInt(250+colVaria), parseInt(160+colVaria), parseInt(100+colVaria), 255], true])
+	}
+	//creates dust field
+	for(var i=0; i<1700; i++){
+		var distance = 80*((Math.random()+4)/5)
+		var angle = Math.random()*2*Math.PI
+		var colVaria = Math.random()*50-25
+		starField.push([distance*Math.sin(angle), distance*Math.cos(angle), (Math.random()-0.5)*2, 
+					   [parseInt(255+colVaria), parseInt(240+colVaria), parseInt(150+colVaria), 255], true])
+	}
+	//creates dust field
+	for(var i=0; i<1700; i++){
+		var distance = 90*((Math.random()+4)/5)
+		var angle = Math.random()*2*Math.PI
+		var colVaria = Math.random()*50-25
+		starField.push([distance*Math.sin(angle), distance*Math.cos(angle), (Math.random()-0.5)*2, 
+					   [parseInt(166+colVaria), parseInt(106+colVaria), parseInt(66+colVaria), 255], true])
+	}
+	//Create fireballs
+	for(var i=0; i<50; i++){
+		particles.push(new particle(30000*(Math.random()+2)/3, vectorScalar(camera2to3([Math.random()*360, Math.random()*360]), 200000), [0,200001], 0, true))
+		particles.push(new particle(30000*(Math.random()+2)/3, vectorScalar(camera2to3([Math.random()*360, Math.random()*360]), 200000), [0,200001], 2, true))
+	}
+	fov = document.getElementById('fov').value
+	if(debugMode != false){ 
+		for(var i=0; i<debugMode; i++){
+			render()
+		}
+	}else{
+		setInterval(getFramerate, 1000);
+		setInterval(render, frameCap);
+	}
+}, 2000);
 
 //Different browser settings
 if(/^((?!chrome|android).)*safari/i.test(navigator.userAgent)) {
@@ -251,12 +350,10 @@ function raster(){
 	//Wireframe, Shading
 	sortedIndexes.forEach((triangle)=>{
 		var value = sceneData[triangle[1]][triangle[2]];
-		//Checks if object needs animation
-		var cameraLocation2 = cameraLocation
 		//Backface cull & Distance cull
 		if(value.backfaceCull(cameraVector, fov)){
 			//Checks if model is in skybox
-			cameraLocation2 = value.isBackground? cameraLocation2=[0,0,0]: cameraLocation2;
+			var cameraLocation2 = value.isBackground? [0,0,0]: cameraLocation;
 
 			//Get 2d coords & Send Job To Workers & Checks If Verts Have Been Calced
 			var vertexes = [objectVerticies[triangle[1]][value.v1], objectVerticies[triangle[1]][value.v2], objectVerticies[triangle[1]][value.v3]];
@@ -264,32 +361,46 @@ function raster(){
 			var thisObject = TwoDemCoords[triangle[1]];
 			[value.v1, value.v2, value.v3].forEach((e, i)=>{
 				thisObject[e] != false? coords[i] = thisObject[e]:
-					coords[i] = vertexToPixel(vertexes[i], cameraLocation2, cameraVector3, cameraPer, width, height, cameraVer);
+					coords[i] = vertexToPixel(vertexes[i], cameraLocation2, cameraVector, cameraPer, width, height, cameraVer);
 					TwoDemCoords[triangle[1]][e] = coords[i];
 			})
 
 			//Checks if shading is off
 			var shade = value.selfShade(sunAngle, gamma)
-			var shaded = (vectorScalar(value.color, shade).map(x => parseInt(x))).concat(255)
-			var triangleDepth = generateZMap(coords, width, height);
+			//gets wirframe
+			var vertTextCoords = [textCoords[triangle[1]][value.textCordS1], textCoords[triangle[1]][value.textCordS2], textCoords[triangle[1]][value.textCordS3]];
+			var triangleDepth = generateZMap(coords, width, height, vertTextCoords);
 			triangleDepth.forEach(coord=>{
 				//Checks if coord is outside of view and clamps
-				if(coord[2]<=height && coord[2]>=0){
+				if(coord[4]<=height && coord[4]>=0){	
 					var Xpos = coord[0]>width?width:coord[0]<0?0:coord[0]
 					var Xpos2 = coord[1]>width?width:coord[1]<0?0:coord[1]
-					var dispPos = (coord[2]*width+Xpos)*4
-					var dispPos2 = (coord[2]*width+Xpos2)*4
+					var dispPos = xyToIndex(Xpos,coord[4],width)
+					var dispPos2 = xyToIndex(Xpos2,coord[4],width)
 					var dispPosTemp = dispPos
+					var texPos1 = coord[2]
+					var texPosSlope=vectorScalar(vectorSubtract(coord[3], texPos1),4/(dispPos2-dispPos))
+					//finds which xcoord is larger
 					if(dispPos>dispPos2){
 						dispPos=dispPos2
 						dispPos2=dispPosTemp
+						texPos1=coord[3]
+						texPosSlope=vectorScalar(vectorSubtract(coord[2], texPos1),4/(dispPos2-dispPos))
 					}
+					//Fallback if texture doesn't exist
+					try{
+						var texture = textures[value.textureIndex].image
+					}catch{
+						var texture = {width:1, height:1, data:[255,0,255]}
+					}
+					var texWid = texture.width
 					if(dispPos2<result.length && dispPos<result.length){
 						for(var i=dispPos;i<dispPos2;i+=4){
-							result[i]  =shaded[0]
-							result[i+1]=shaded[1]
-							result[i+2]=shaded[2]
-							result[i+3]=shaded[3]
+							//Converts UV coordinates to pixel postions
+							var temp=xyToIndex(parseInt((texPos1[0])*texWid), parseInt((1-texPos1[1])*texture.height), texWid)
+							var shaded = texture.data.slice(temp, temp+3)
+							result.set([shaded[0], shaded[1], shaded[2], 255*shade], i)
+							texPos1=vectorAdd(texPos1,texPosSlope)
 						}
 					}
 				}
@@ -307,20 +418,24 @@ function raster(){
 			if(0 < coords[0] && coords[0] < width && 0 < coords[1] && coords[1] < height && textures[value.textureIndex] != undefined){
 				//Checks if texture exists
 				var appSizeRatio = value.size/(Math.PI*2*temp1[1]*(fov/360))
-				var texWid = textures[value.textureIndex].image.width
-				var texHet = textures[value.textureIndex].image.height
-				var texCol = textures[value.textureIndex].image.data
-				var apparentWidth = parseInt(appSizeRatio*texWid), apparentHeight = parseInt(appSizeRatio*texHet)
+				var texWid = textures[value.textureIndex].image.width,
+				texHet = textures[value.textureIndex].image.height,
+				texCol = textures[value.textureIndex].image.data,
+				apparentWidth = parseInt(appSizeRatio*texWid),
+				apparentHeight = parseInt(appSizeRatio*texHet)
 				//Puts the texture in result 
 				for(var y=0;y<apparentHeight;y++){
 					var Ypos2 = parseInt(y/apparentHeight * texHet)
 					for(var x=0;x<apparentWidth;x++){
-						var Xpos2 = parseInt(x/apparentWidth * texWid)
-						var dispPos = (coords[0]+x+((coords[1]+y) * width))*4;
-						var texPos = (Xpos2+(Ypos2 * texWid))*4;
-						//Alpha check, out of index check, pixel is empty check
-						if (dispPos<result.length*4 && texCol[texPos + 3]>0 && result[dispPos+3]==0){
-							result.set(Array.from(texCol.slice(texPos, texPos+3)).concat(255), dispPos)
+						//Checks for width overlap
+						if(coords[0]+x<width){
+							var Xpos2 = parseInt(x/apparentWidth * texWid)
+							var dispPos = xyToIndex(coords[0]+x, coords[1]+y ,width);
+							var texPos = xyToIndex(Xpos2, Ypos2, texWid)
+							//Alpha check, out of index check, pixel is empty check
+							if (dispPos<result.length && texCol[texPos + 3]>0 && result[dispPos+3]==0){
+								result.set(Array.from(texCol.slice(texPos, texPos+3)).concat(255), dispPos)
+							}
 						}
 					}
 				}
@@ -330,9 +445,9 @@ function raster(){
 	//Renders stars
 	starField.forEach(value=>{
 		var cameraLocation2 = value[4]?cameraLocation:[0,0,0]
-		var coords = vertexToPixel([value[0],value[1],value[2]], cameraLocation2, cameraVector3, cameraPer, width, height, cameraVer);
+		var coords = vertexToPixel([value[0],value[1],value[2]], cameraLocation2, cameraVector, cameraPer, width, height, cameraVer);
 		if(0 < coords[0] && coords[0] < width && 0 < coords[1] && coords[1] < height){	
-			var displayPosition = (coords[0] + (coords[1] * width))*4;
+			var displayPosition = xyToIndex(coords[0], coords[1], width)
 			if (displayPosition<result.length && result[displayPosition+3]==0){
 				result.set(value[3].concat(255), displayPosition)
 			}
@@ -347,10 +462,6 @@ function render(){
 		document.getElementById('resolutionX').onchange = function(){
 			ctx.width = document.getElementById('resolutionX').value;
 			width = ctx.width;
-			slice=new Uint16Array(new ArrayBuffer(2*width))
-			for(var i=0;i<width;i++){
-				slice[i]=i
-			}
 		}
 		document.getElementById('resolutionY').onchange = function(){
 			ctx.height = document.getElementById('resolutionY').value;
@@ -370,33 +481,20 @@ function render(){
 		frameCounter++;
 		gamma=parseInt(document.getElementById('gamma').value)
 		//Changes sun position
-		var date_ob = new Date();
-		sunAngle=(date_ob.getMinutes()/20)*360
+		sunAngle=(new Date().getMinutes()/20)*360
 
 		//Hides or unhides debug elements
-		if(!showDebug){
-			document.getElementById('Frames').setAttribute('style', 'color: black')
-			document.getElementById('Framerate').setAttribute('style', 'color: black')
-			try{
-				document.getElementById('settings').setAttribute('style', 'display: none')
-			}catch{
-
-			}
-			document.getElementById('inputLabel').setAttribute('style', 'display: none')
-			document.getElementById('homeButton').setAttribute('style', 'display: none')
-			document.getElementById('keys').setAttribute('style', 'display: none')
-		}else{
-			document.getElementById('Frames').setAttribute('style', 'color: orange')
-			document.getElementById('Framerate').setAttribute('style', 'color: orange')
-			try{
-				document.getElementById('settings').setAttribute('style', 'display: inline')
-			}catch{
-
-			}
-			document.getElementById('inputLabel').setAttribute('style', 'display: inline')
-			document.getElementById('homeButton').setAttribute('style', 'display: inline')
-			document.getElementById('keys').setAttribute('style', 'display: inline, width: 20px;')
+		var displayMode = showDebug?'inline':'none'
+		var colorMode = showDebug?'orange':'black'
+		document.getElementById('Frames').setAttribute('style', 'color: '+colorMode)
+		document.getElementById('Framerate').setAttribute('style', 'color: '+colorMode)
+		try{
+			document.getElementById('settings').setAttribute('style', 'display: '+displayMode)
+		}catch{
 		}
+		document.getElementById('inputLabel').setAttribute('style', 'display: '+displayMode)
+		document.getElementById('homeButton').setAttribute('style', 'display: '+displayMode)
+		document.getElementById('keys').setAttribute('style', showDebug?'width: 20px; display: inline; float: none':'display: none')
 	}catch(err){
 		hasErr = true;
 		document.getElementById('Framerate').textContent = err + '\n' + err.stack;
@@ -437,13 +535,14 @@ inputElement.addEventListener('change', function(){
 function selfImport(object, userMode=false)
 {
 	//Checks if object variables are undefined
-	var file=object.file, color=object.color, 
+	var file=object.file,
 		offset=object.offset!=undefined?object.offset:[0,0,0], 
 		scale=object.scale!=undefined?object.scale:1, 
 		isEmmision=object.isEmmision!=undefined?object.isEmmision:false, 
 		isBackground=object.isBackground!=undefined?object.isBackground:false, 
 		LOD=object.LOD!=undefined?object.LOD:false,
-		roughness=object.roughness!=undefined?object.roughness:3
+		roughness=object.roughness!=undefined?object.roughness:3,
+		textureIndex=object.textureIndex!=undefined?object.textureIndex:0
 	var rawFile = new XMLHttpRequest();
 	var allText=file;
 	if(!userMode){
@@ -470,18 +569,26 @@ function selfImport(object, userMode=false)
 		objectVerticies.push(temp);
 		//Updates vertex count
 		vertexCount+=temp.length;
+		//Adds texture coordinates to objectVerticies
+		var temp2 = [];
+		content.textureCoords.forEach(value=>{
+			temp2.push(Object.values(value));
+		})
+		textCoords.push(temp2)
 
 		//select faces
 		var objectData = [];
 		content.faces.forEach((value)=>{
 			var indexes = [];
+			var coordindexes = [];
 			//get indexes of verticies for the face
 			value.vertices.forEach((value2)=>{
 				indexes.push(value2.vertexIndex-1);
+				coordindexes.push(value2.textureCoordsIndex-1);
 			})
 
 			//add face to sceneData
-			var newFace = new face(roughness, [color[0], color[1], color[2]], indexes, temp, isEmmision, isBackground, LOD);
+			var newFace = new face(roughness, indexes, temp, isEmmision, isBackground, LOD, coordindexes, textureIndex);
 			objectData.push(newFace);
 		})
 
@@ -494,7 +601,7 @@ function selfImport(object, userMode=false)
 	fr.readAsText(allText);
 }
 //copy paste model
-function copyPaste(model, vertices, offset=[0,0,0], scale=1, isEmmision=false, isBackground=false, LOD=false, randomColor=false){
+function copyPaste(model, vertices, offset=[0,0,0], scale=1, isEmmision=false, isBackground=false, LOD=false, texCoords=[]){
 	//Adds verticies to objectVerticies
 	var temp = [];
 	vertices.forEach(value=>{
@@ -504,13 +611,14 @@ function copyPaste(model, vertices, offset=[0,0,0], scale=1, isEmmision=false, i
 	objectVerticies.push(temp);
 	//Updates vertex count
 	vertexCount+=temp.length;
+	//Adds texture coordinates to textCoords
+	textCoords.push(texCoords)
 
 	//select faces
-	var color = randomColor? vectorScalar(model[0].color, (Math.random()+0.5)/1.5): model[0].color
 	var objectData = [];
 	model.forEach(value=>{
 		//add face to sceneData
-		var newFace = new face(3, color, [value.v1, value.v2, value.v3], temp, isEmmision, isBackground, LOD);
+		var newFace = new face(3, [value.v1, value.v2, value.v3], temp, isEmmision, isBackground, LOD, [value.textCordS1, value.textCordS2, value.textCordS3], value.textureIndex);
 		objectData.push(newFace);
 	})
 
@@ -527,13 +635,12 @@ function importTexture(path, ind, alphaPath=false){
 	//Get image
 	var color = new Image();
 	var alphaMask = new Image();
-	var alpha;
 	alphaMask.onload = function() {
 		//Adjust canvas size to fit
 		Ctx.width = alphaMask.width;
 		Ctx.height = alphaMask.height;
 		C.drawImage(alphaMask, 0, 0);
-		alpha = C.getImageData(0, 0, color.width, color.height)
+		var alpha = C.getImageData(0, 0, color.width, color.height)
 		Ctx.width = 1;
 		Ctx.height = 1;
 		color.onload = function() {
@@ -563,85 +670,3 @@ document.getElementById('fov').onchange = function(){
 function nothing(){
 	return null;
 }
-
-//Loading Screen
-var load = new Image();
-load.onload = function() {
-	c.drawImage(load, 0, 0);
-};
-load.src = './textures/loading.png';
-textures=new Array(3)
-importTexture('./textures/fireball.png',0,'./textures/fireballAlpha.jpg')
-importTexture('./textures/Asteroid.png',1,'./textures/AsteroidAlpha.jpg')
-importTexture('./textures/fireball2.png',2,'./textures/fireballAlpha.jpg')
-
-selfImport({file: './models/Sun.obj', color: [255, 255, 255], offset: [-3000,3000,1800], scale: 80, isEmmision: true, isBackground: true});
-selfImport({file: './models/Sun.obj', color: [255, 100, 100], scale: 5});
-selfImport({file: './models/1.obj', color: [250, 160, 100], LOD: [100000000,100000001]});
-selfImport({file: './models/2.obj', color: [250, 160, 100], LOD: [100000000,100000001]});
-selfImport({file: './models/3.obj', color: [250, 160, 100], LOD: [100000000,100000001]});
-selfImport({file: './models/4.obj', color: [250, 160, 100], LOD: [100000000,100000001]});
-selfImport({file: './models/5.obj', color: [250, 160, 100], LOD: [100000000,100000001]});
-
-//Gives time for texture import
-setTimeout(function(){
-	console.log(sceneData)
-	console.log(objectVerticies)
-	console.log(textures)
-	//creates asteroid field
-	for(var i=0; i<500; i++){
-		var selectModel = parseInt(Math.random()*6)
-		var distance = 100*((Math.random()+4)/5)
-		var angle = Math.random()*2*Math.PI
-		var position = [distance*Math.sin(angle), distance*Math.cos(angle), (Math.random()-0.5)*2]
-		var lod = [0.1,30]
-		var sclrurer =  0.1*(Math.random()+1)/2
-		switch(selectModel){
-			case 1:
-				copyPaste(sceneData[2], objectVerticies[2], position, sclrurer, false, false, lod, true)
-				break;
-			case 2:
-				copyPaste(sceneData[3], objectVerticies[3], position, sclrurer, false, false, lod, true)
-				break;
-			case 3:
-				copyPaste(sceneData[4], objectVerticies[4], position, sclrurer, false, false, lod, true)
-				break;
-			case 4:
-				copyPaste(sceneData[5], objectVerticies[5], position, sclrurer, false, false, lod, true)
-				break;
-			case 5:
-				copyPaste(sceneData[6], objectVerticies[6], position, sclrurer, false, false, lod, true)
-				break;
-		}
-		particles.push(new particle(1.5, position, [30, 100], 1, false))
-	}
-	//Create starfield
-	for(var i=0; i<4000; i++){
-		starField.push([parseInt((Math.random()-0.5)*1000), 
-						parseInt((Math.random()-0.5)*1000), 
-						parseInt((Math.random()-0.5)*1000), 
-						[(Math.random()*500), (Math.random()*500), (Math.random()*500), 255],false])
-	}
-	//creates dust field
-	for(var i=0; i<5000; i++){
-		var distance = 100*((Math.random()+4)/5)
-		var angle = Math.random()*2*Math.PI
-		var colVaria = Math.random()*50-25
-		starField.push([distance*Math.sin(angle), distance*Math.cos(angle), (Math.random()-0.5)*2, 
-					   [parseInt(250+colVaria), parseInt(160+colVaria), parseInt(100+colVaria), 255], true])
-	}
-	//Create fireballs
-	for(var i=0; i<50; i++){
-		particles.push(new particle(30000*(Math.random()+2)/3, vectorScalar(camera2to3([Math.random()*360, Math.random()*360]), 200000), [0,200001], 0, true))
-		particles.push(new particle(30000*(Math.random()+2)/3, vectorScalar(camera2to3([Math.random()*360, Math.random()*360]), 200000), [0,200001], 2, true))
-	}
-	fov = document.getElementById('fov').value
-	if(debugMode != false){ 
-		for(var i=0; i<debugMode; i++){
-			render()
-		}
-	}else{
-		setInterval(getFramerate, 1000);
-		setInterval(render, frameCap);
-	}
-}, 2000);
