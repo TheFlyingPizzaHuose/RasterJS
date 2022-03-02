@@ -12,7 +12,8 @@ function vertexToPixel(vector1, cameraLocation, cameraVector, cameraPerpendicula
     //Projected length : 1
     var relVec = vectorSubtract(vector1, cameraLocation);
     var ratio = dotProduct(relVec, cameraVector);
-    if(ratio>=0){
+    ratio = ratio==0?0.0001:ratio
+    if(ratio>0){
         //Scaled vectors by ratio
         var temp = width/ratio
         var X = dotProduct(relVec, cameraPerpendicular)*temp+(width/2)
