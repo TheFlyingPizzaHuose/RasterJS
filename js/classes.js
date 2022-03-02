@@ -57,6 +57,7 @@ class element{
                 this.position = inputObject.position
                 this.isBackground = inputObject.isBackground
                 this.textureIndex = inputObject.textureIndex;
+                this.isSameScale = inputObject.textureIndex;
                 break;
         }    
         //Sets element type
@@ -72,10 +73,10 @@ class element{
         if(this.size != undefined){
             this.lod = function(cameraLocation){
                 if(this.minLod==false){
-                    return [true, vectorDistance(this.position, cameraLocation)]
+                    return [true, this.isSameScale?1:vectorDistanceTrue(this.position, cameraLocation)]
                 }else{
-                    var dist = vectorDistance(this.position, cameraLocation)
-                    return [(dist>this.minLod && dist<this.maxLod)? true: false, dist]
+                    var dist = vectorDistanceTrue(this.position, cameraLocation)
+                    return [(dist>this.minLod && dist<this.maxLod)? true: false, this.isSameScale?1:dist]
                 }
             }
         }
