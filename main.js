@@ -254,7 +254,7 @@ setTimeout(function(){
 					importTexture(value, index, textureAlphaPaths[index])
 				}
 			})
-		},10000)
+		},1000)
 		setInterval(getFramerate, 1000);
 		setInterval(render, frameCap);
 	}
@@ -584,7 +584,6 @@ function display(image){
 function raster(){
 	var TwoDemCoords = new Array(objectVerticies.length).fill([]).map((v, i)=>new Array(objectVerticies[i].length).fill(false));
 	var result = new Uint8ClampedArray((new Array(width*height*4).fill(0)))
-	var shades = new Uint8ClampedArray((new Array(width*height).fill(0)))
 
 	document.getElementById('Frames').textContent = "Frames: " + frameCounter + ' '
 
@@ -786,10 +785,20 @@ function render(){
 			fov = document.getElementById('fov').value
 			fovLength = Math.tan(degToArc(fov/2));
 		}
+		//Check if textures are imported
+		var texturesImported = true
+		textureColorPaths.forEach((value,index)=>{
+			if(textures[index]==(null || undefined)){
+				texturesImported = false
+			}
+		})
 		//draws image
-		var start = window.performance.now()
-		raster();
-		var end = window.performance.now()
+		var start = 1, end = 1000
+		if(texturesImported){
+			start = window.performance.now()
+			raster();
+			end = window.performance.now()
+		}
 		frameTimeGraph=[end-start, ...frameTimeGraph].slice(0,100)
 		dispTime()
 
