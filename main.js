@@ -17,22 +17,50 @@ var frameCounter=0,frameSinceLastTime=0,vertexCount=0,hasErr=false,countsSinceLa
 var elements=[],objectVerticies=[],objectAnimate=[],sortedIndexes=[],sunAngle=0,gamma=3;
 //Texture variables
 var textures=[],textCoords=[],
-textureColorPaths=['./textures/fireball.png', 
-				   './textures/Asteroid.png', 
-				   './textures/fireball2.png', 
-				   './textures/Earth.jpg', 
-				   './textures/Dirt.jpg',
-				   './textures/DirtAlpha.jpg', 
-				   './textures/Moon.jpg',
-				   './textures/Galaxy HDRI.jpg'],
-textureAlphaPaths=['./textures/fireballAlpha.jpg',
-				   './textures/AsteroidAlpha.jpg',
-				   './textures/fireballAlpha.jpg',
-				   './textures/EarthAlpha.jpg',
-				   './textures/DirtAlpha.jpg',
-				   './textures/DirtAlpha.jpg', 
-				   './textures/MoonAlpha.jpg', 
-				   './textures/Galaxy HDRIAlpha.jpg']
+textureColorPaths=['./textures/Asteroid.jpg', //0
+				   './textures/Earth.jpg', //1
+				   './textures/Dirt.jpg',//2
+				   './textures/DirtAlpha.jpg', //3
+				   './textures/Moon.jpg',//4
+				   './textures/Planet Markers/MarkerEarth.jpg',//5
+				   './textures/Planet Markers/MarkerMoon.jpg',//6
+				   './textures/Planet Markers/MarkerSun.jpg',//7
+				   './textures/Saturn.jpg',//8
+				   './textures/Planet Markers/MarkerSaturn.jpg',//9
+				   './textures/Mars.jpg',//10
+				   './textures/Planet Markers/MarkerMars.jpg',//11
+				   './textures/Mercury.jpg',//12
+				   './textures/Planet Markers/MarkerMercury.jpg',//13
+				   './textures/Venus.jpg',//14
+				   './textures/Planet Markers/MarkerVenus.jpg',//15
+				   './textures/Jupiter.jpg',//16
+				   './textures/Planet Markers/MarkerJupiter.jpg',//17
+				   './textures/Uranus.jpg',//18
+				   './textures/Neptune.jpg',//19
+				   './textures/Planet Markers/MarkerUranus.jpg',//20
+				   './textures/Planet Markers/MarkerNeptune.jpg'],
+textureAlphaPaths=['./textures/AsteroidAlpha.jpg',//0
+				   './textures/EarthAlpha.jpg',//1
+				   './textures/DirtAlpha.jpg',//2
+				   './textures/DirtAlpha.jpg', //3
+				   './textures/MoonAlpha.jpg', //4
+				   './textures/Planet Markers/MarkerEarth.jpg',//5
+				   './textures/Planet Markers/MarkerMoon.jpg',//6
+				   './textures/Planet Markers/MarkerSun.jpg',//7
+				   './textures/SaturnAlpha.jpg',//8
+				   './textures/Planet Markers/MarkerSaturn.jpg',//9
+				   './textures/MarsAlpha.jpg',//10
+				   './textures/Planet Markers/MarkerMars.jpg',//11
+				   './textures/MercuryAlpha.jpg',//12
+				   './textures/Planet Markers/MarkerMercury.jpg',//13
+				   './textures/VenusAlpha.jpg',//14
+				   './textures/Planet Markers/MarkerVenus.jpg',//15
+				   './textures/JupiterAlpha.jpg',//16
+				   './textures/Planet Markers/MarkerJupiter.jpg',//17
+				   './textures/UranusAlpha.jpg',//18
+				   './textures/NeptuneAlpha.jpg',//19
+				   './textures/Planet Markers/MarkerUranus.jpg',//20
+				   './textures/Planet Markers/MarkerNeptune.jpg']
 //Camera variables 
 //var cameraPer=[0,1,0],cameraVector3=[-1,0,0],cameraVer=[0,0,-1],cameraLocation=[20,0,0],cameraLocationPrevious=[],fov=70,fovLength=1;
 var cameraPer=[1,0,0],cameraVector3=[0,1,0],cameraVer=[0,0,-1],cameraLocation=[0,-200,0],cameraLocationPrevious=[],fov=70,fovLength=1;
@@ -48,23 +76,31 @@ textureColorPaths.forEach((value,index)=>{
 	importTexture(value, index, textureAlphaPaths[index])
 })
 
-selfImport({file: './models/Sun.obj', offset: [-3000,3000,1800], scale: 80, isEmmision: true, isBackground: true, textureIndex: 5});
-selfImport({file: './models/Planet.obj', scale: 30, textureIndex: 3});
-selfImport({file: './models/1.obj', LOD: [100000000,100000001], textureIndex: 4});
-selfImport({file: './models/2.obj', LOD: [100000000,100000001], textureIndex: 4});
-selfImport({file: './models/3.obj', LOD: [100000000,100000001], textureIndex: 4});
-selfImport({file: './models/4.obj', LOD: [100000000,100000001], textureIndex: 4});
-selfImport({file: './models/5.obj', LOD: [100000000,100000001], textureIndex: 4});
-selfImport({file: './models/Planet.obj', offset: [500,1000,0], scale: 5, textureIndex: 6});
+selfImport({file: './models/Sun.obj', offset: [-30000,30000,0], scale: 100, isEmmision: true, textureIndex: 3});//Sun
+selfImport({file: './models/Planet.obj', LOD: [0.0001,20000000], scale: 30, textureIndex: 1});//Earth
+selfImport({file: './models/1.obj', LOD: [100000000,100000001], textureIndex: 2});
+selfImport({file: './models/2.obj', LOD: [100000000,100000001], textureIndex: 2});
+selfImport({file: './models/3.obj', LOD: [100000000,100000001], textureIndex: 2});
+selfImport({file: './models/4.obj', LOD: [100000000,100000001], textureIndex: 2});
+selfImport({file: './models/5.obj', LOD: [100000000,100000001], textureIndex: 2});
+selfImport({file: './models/Planet.obj', LOD: [0.0001,20000000], offset: [500,1000,0], scale: 5, textureIndex: 4});//Moon
+selfImport({file: './models/Planet.obj', LOD: [0.0001,20000000], offset: [30000,30000,0], scale: 30, textureIndex: 8});//Saturn
+selfImport({file: './models/Planet.obj', LOD: [0.0001,20000000], offset: [-2000,25000,1000], scale: 30, textureIndex: 10});//Mars
+selfImport({file: './models/Planet.obj', LOD: [0.0001,20000000], offset: [-20000,29000,0], scale: 10, textureIndex: 12});//Mercury
+selfImport({file: './models/Planet.obj', LOD: [0.0001,20000000], offset: [-50000,20000,0], scale: 30, textureIndex: 14});//Venus
+selfImport({file: './models/Planet.obj', LOD: [0.0001,20000000], offset: [-80000,30000,0], scale: 30, textureIndex: 16});//Jupiter
+selfImport({file: './models/Planet.obj', LOD: [0.0001,20000000], offset: [-30000,-60000,0], scale: 30, textureIndex: 18});//Uranus
+selfImport({file: './models/Planet.obj', LOD: [0.0001,20000000], offset: [-30000,80000,-10000], scale: 30, textureIndex: 19});//Neptune
 
 //Gives time for texture import
 setTimeout(function(){
 	//creates asteroid field
 	for(var i=0; i<500; i++){
 		var selectModel = parseInt(Math.random()*6)
-		var distance = 70*((Math.random()+4)/5)
+		var distance = 70*((Math.random()+2)/3)
 		var angle = Math.random()*2*Math.PI
 		var position = [distance*Math.sin(angle), distance*Math.cos(angle), (Math.random()-0.5)*2]
+		position = vectorAdd(position, [30000,30000,0])
 		var lod = [0.0001,500]
 		var sclrurer =  0.1*(Math.random()+1)/2
 		switch(selectModel){
@@ -85,31 +121,53 @@ setTimeout(function(){
 				break;
 		}
 		elements.push(new element({type: "particle",
-								   size: 10, 
+								   size: 0.02, 
 								   position: position, 
-								   LOD: [500, 1000000], 
-								   textureIndex: 1, 
-								   isBackground: false}))
+								   LOD: [25, 1000], 
+								   textureIndex: 0, 
+								   isBackground: false,
+								   isSameScale: false}))
 	}
-	//creates dust field
+	//creates dust field far
 	for(var i=0; i<2500; i++){
 		var angle = Math.random()*2*Math.PI
 		var colVaria = Math.random()*50-25, distance, position, color = [parseInt(255+colVaria), parseInt(240+colVaria), parseInt(150+colVaria)]
 		switch(parseInt(Math.random()*3)){
 			case 1:
-				distance = 70*((Math.random()+4)/5)
+				distance = 70*((Math.random()+2)/3)
 				color = [parseInt(250+colVaria), parseInt(160+colVaria), parseInt(100+colVaria)]
 			case 2:
-				distance = 60*((Math.random()+4)/5)
+				distance = 60*((Math.random()+2)/3)
 			case 3:
-				distance = 80*((Math.random()+4)/5)
+				distance = 80*((Math.random()+2)/3)
 				color = [parseInt(166+colVaria), parseInt(106+colVaria), parseInt(66+colVaria)]
 		}
 		elements.push(new element({type: "point",
 								   size: 200000000, 
-								   position: [distance*Math.sin(angle), distance*Math.cos(angle), (Math.random()-0.5)*2], 
+								   position: vectorAdd([distance*Math.sin(angle), distance*Math.cos(angle), (Math.random()-0.5)*2], [30000,30000,0]), 
 								   color: color, 
-								   LOD: false, 
+								   LOD: [200,5000], 
+								   isBackground: false}))
+	}
+	//creates dust field close
+	for(var i=0; i<7500; i++){
+		var angle = Math.random()*2*Math.PI
+		var colVaria = Math.random()*50-25, distance, position, color = [parseInt(255+colVaria), parseInt(240+colVaria), parseInt(150+colVaria)]
+		switch(parseInt(Math.random()*3)){
+			case 1:
+				distance = 70*((Math.random()+2)/3)
+				color = [parseInt(250+colVaria), parseInt(160+colVaria), parseInt(100+colVaria)]
+			case 2:
+				distance = 60*((Math.random()+2)/3)
+			case 3:
+				distance = 80*((Math.random()+2)/3)
+				color = [parseInt(166+colVaria), parseInt(106+colVaria), parseInt(66+colVaria)]
+		}
+		elements.push(new element({type: "point",
+								   size: 200000000, 
+								   position: vectorAdd([distance*Math.sin(angle), distance*Math.cos(angle), (Math.random()-0.5)*2], [30000,30000,0]), 
+								   color: color, 
+								   LOD: [0.0001,200], 
 								   isBackground: false}))
 	}
 	//Create starfield
@@ -121,13 +179,66 @@ setTimeout(function(){
 										  LOD: false, 
 										  isBackground: true}))
 	}
-	//Create larger stars
-	for(var i=0; i<0; i++){
-		var size = 30000*(Math.random()+2)/3, position = vectorScalar(camera2to3([Math.random()*360, Math.random()*360]), 200000),
-			LOD = [0,200001]
-		elements.push(new element({type: "particle", size: size, position: position, LOD: LOD, textureIndex: 0, isBackground: true}))
-		elements.push(new element({type: "particle", size: size, position: position, LOD: LOD, textureIndex: 2, isBackground: true}))
-	}
+	elements.push(new element({type: "particle",
+									  size: 0.1, 
+									  position: [0,0,0], 
+									  LOD: [1000,1000000000],
+									  textureIndex: 5,
+									  isSameScale: true}))//Earth Marker
+	elements.push(new element({type: "particle",
+									size: 0.1, 
+									position: [500,1000,0], 
+									LOD: [400,1000000000],
+									textureIndex: 6,
+									isSameScale: true}))//Moon Marker
+	elements.push(new element({type: "particle",
+									size: 0.1, 
+									position: [-30000,30000,0], 
+									LOD: [3000,1000000000],
+									textureIndex: 7,
+									isSameScale: true}))//Sun Marker
+	elements.push(new element({type: "particle",
+									size: 0.1, 
+									position: [30000,30000,0], 
+									LOD: [1000,1000000000],
+									textureIndex: 9,
+									isSameScale: true}))//Saturn Marker
+	elements.push(new element({type: "particle",
+									size: 0.1, 
+									position: [-2000,25000,1000], 
+									LOD: [1000,1000000000],
+									textureIndex: 11,
+									isSameScale: true}))//Mars Marker
+	elements.push(new element({type: "particle",
+									size: 0.1, 
+									position: [-20000,29000,0], 
+									LOD: [1000,1000000000],
+									textureIndex: 13,
+									isSameScale: true}))//Mercury Marker
+	elements.push(new element({type: "particle",
+									size: 0.1, 
+									position: [-50000,20000,0], 
+									LOD: [1000,1000000000],
+									textureIndex: 15,
+									isSameScale: true}))//Venus Marker
+	elements.push(new element({type: "particle",
+									size: 0.1, 
+									position: [-80000,30000,0], 
+									LOD: [1000,1000000000],
+									textureIndex: 17,
+									isSameScale: true}))//Jupiter Marker
+	elements.push(new element({type: "particle",
+									size: 0.1, 
+									position: [-30000,-60000,0], 
+									LOD: [1000,1000000000],
+									textureIndex: 20,
+									isSameScale: true}))//Uranus Marker
+	elements.push(new element({type: "particle",
+									size: 0.1, 
+									position: [-30000,80000,-10000], 
+									LOD: [1000,1000000000],
+									textureIndex: 21,
+									isSameScale: true}))//Neptune Marker
 	fov = document.getElementById('fov').value
 	//Begins render
 	if(debugMode != false){ 
@@ -472,8 +583,8 @@ function display(image){
 //Raster
 function raster(){
 	var TwoDemCoords = new Array(objectVerticies.length).fill([]).map((v, i)=>new Array(objectVerticies[i].length).fill(false));
-	var cacldPairs = new Array(objectVerticies.length).fill({})
 	var result = new Uint8ClampedArray((new Array(width*height*4).fill(0)))
+	var shades = new Uint8ClampedArray((new Array(width*height).fill(0)))
 
 	document.getElementById('Frames').textContent = "Frames: " + frameCounter + ' '
 
@@ -538,6 +649,7 @@ function raster(){
 				
 				//Checks if shading is off
 				var shade = value.selfShade(sunAngle, gamma)
+				shade = shade>0?shade:0
 
 				lines.forEach((coord, y)=>{
 					//Checks if coord is outside of view and clamps
