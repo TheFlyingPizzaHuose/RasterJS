@@ -16,7 +16,9 @@
         <br>
         <p>
         What you see on the screen bellow is a planet in the midst of being obliterated with it's asteriod ring. Since the recent texture
-        mapping feature hasn't been optimized, moving close to objects will result in major performance drops so beware.
+        mapping feature hasn't been optimized, moving close to objects will result in major performance drops so beware. Some textures are also
+        quite large in file size and therfore might not load depending on internet speed. This will make some objects in the world appear
+        as pure purple/magenta. The website will attempt to reload these textures every 10 seconds so do not worry.
         </p>
         <br>
         <br>
@@ -131,6 +133,10 @@
                 <td>
                     <p id="Framerate" style='color: orange'>Framerate: </p>
                 </td>
+                <td>       
+                    <p id='Frametimelabel' style='display: inline; color: orange;'>Frametime: </p>
+                    <canvas class="d-inline" id="Frametime" width="200" height="50"></canvas>
+                </td>
                 <td>
                     <p id="Vertex Count" style='color: orange'>Vertex Count: </p>
                 </td>
@@ -145,6 +151,6 @@
             Your browser does not support the audio element.
         </audio>
         <canvas class="screen" id="screen" width="800" height="460"></canvas>
-        <canvas id="texture" style="display: hidden"></canvas>
+        <canvas id="texture" style="display: none"></canvas>
     </body>
 </html>

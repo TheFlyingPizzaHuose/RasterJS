@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html lang="en-US">
 <head>
-    <meta charset="UTF-8" name='viewport' content='width=device-width'>
+    <meta charset="UTF-8" name='viewport'>
     <title>RasterJS</title>
     <link type="text/css" rel="stylesheet" href="style2.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
@@ -28,7 +28,7 @@
         <p style='display: inline; color: orange;' id="Frames">Frames: </p>
         <p style='display: inline; color: orange;' id="Framerate">Framerate: </p>
         <details id='settings' style='display: inline;'>
-            <summary>Settings</summary>
+            <summary>Extra</summary>
             <p style='display: inline;'>Fov: </p>
             <input style='display: inline; float: none;' type="range" id="fov" value="70" min='10' max='179'>
             <p style='display: inline;'>Sensitivity: </p>
@@ -39,6 +39,8 @@
             <input type="number" id="resolutionY" value="430">
             <p style='display: inline;'>Gamma: </p>
             <input type="range" id="gamma" value="3" min='1' max='10'>
+            <p id='Frametimelabel' style='color: orange;'>Frametime: </p>
+            <canvas id="Frametime" width="200" height="50"></canvas>
         </details>
         <a href="/" id='homeButton'><button value='Submit' class="btn btn-primary d-inline">Home</button></a>
         <p style='display: inline;' id='inputLabel'>Click For Mobile Keyboard Input: </p>
@@ -47,7 +49,8 @@
             <source src="./music/Kevin MacLeod _ Arcadia.mp3" type="audio/mpeg">
             Your browser does not support the audio element.
         </audio>
+        <br>
         <canvas class="screen" id="screen" width="800" height="460"></canvas>
-        <canvas id="texture" style="display: hidden"></canvas>
+        <canvas id="texture" style="display: none"></canvas>
     </body>
 </html>
