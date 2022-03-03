@@ -1,20 +1,23 @@
 import {element} from './js/classes.js';
-import {vertexToPixel} from './js/raster.js';
+import {camera2to3, vertexToPixel, vertexToPixel2} from './js/raster.js';
 import * as objParse from './obj-file-parser/dist/OBJFile.js';
-import {xyToIndex, degToArc, vectorAdd, vectorScalar, sort2dReverse, vectorDistance, vectorSubtract} from './js/math.js';
+import {xyToIndex, degToArc, vectorAdd, vectorScalar, sort2dReverse, vectorDistance, vectorSubtract, vector3to2, normalize} from './js/math.js';
 import {generateZMap} from './js/shading.js';
+import {animationPosition} from './js/position.js';
+import {animationRotation} from './js/rotation.js';
 
 //###########################################Variables###########################################
 //Config settings
 var debugMode = false;
 var frameCap = 1000/60
+var cinematicMode = false
 //Canvas variables
 var ctx = document.getElementById('screen'), c = ctx.getContext("2d"), width = ctx.width, height = ctx.height;
 var graph = document.getElementById('Frametime'),  graphc = document.getElementById('Frametime').getContext("2d");;
 //Debug variables
 var frameCounter=0,frameSinceLastTime=0,vertexCount=0,hasErr=false,countsSinceLastErr=0,showDebug=true, frameTimeGraph=[];
 //Scene data variables
-var elements=[],objectVerticies=[],objectAnimate=[],sortedIndexes=[],sunAngle=0,gamma=3;
+var elements=[],objectVerticies=[],objectAnimate=[],sortedIndexes=[],sunAngle=0,gamma=3,animFrm=0;
 //Texture variables
 var textures=[],textCoords=[],
 textureColorPaths=['./textures/Asteroid.jpg', //0
@@ -734,7 +737,7 @@ function raster(){
 					//Checks if coord is outside of view
 					if(0 < coords[0] && coords[0] < width && 0 < coords[1] && coords[1] < height){
 						//Checks if texture exists
-						var appSizeRatio = value.size/(Math.PI*2*temp1[1]*(fov/360))
+						var appSizeRatio = (width/800)*value.size/(Math.PI*2*temp1[1]*(fov/360))
 						var texture = textures[value.textureIndex]!=undefined?textures[value.textureIndex]:{image:{width:1,height:1,data:[255,0,255,255]}},
 						texHet = texture.image.height,
 						texCol = texture.image.data,
@@ -773,18 +776,13 @@ function raster(){
 function render(){	
 	try{
 		//Updates canvas resolution
-		document.getElementById('resolutionX').onchange = ()=>{
-			ctx.width = document.getElementById('resolutionX').value;
-			width = ctx.width;
-		}
-		document.getElementById('resolutionY').onchange = ()=>{
-			ctx.height = document.getElementById('resolutionY').value;
-			height = ctx.height;
-		}
-		document.getElementById('fov').onchange = ()=>{
-			fov = document.getElementById('fov').value
-			fovLength = Math.tan(degToArc(fov/2));
-		}
+		ctx.width = document.getElementById('resolutionX').value;
+		width = ctx.width;
+		ctx.height = document.getElementById('resolutionY').value;
+		height = ctx.height;
+		fov = document.getElementById('fov').value
+		fovLength = Math.tan(degToArc(fov/2));
+		
 		//Check if textures are imported
 		var texturesImported = true
 		textureColorPaths.forEach((value,index)=>{
@@ -795,6 +793,18 @@ function render(){
 		//draws image
 		var start = 1, end = 1000
 		if(texturesImported){
+			//Updates Camera Animation
+			if(cinematicMode){
+				var temp = animationPosition
+				cameraLocation = vectorScalar([temp[animFrm], temp[animFrm+1], temp[animFrm+2]],1000)
+				temp = animationRotation
+				var animAnl = vertexToPixel2(camera2to3([-temp[animFrm+2]*180/Math.PI, temp[animFrm]*180/Math.PI-90]), [0,0,0], cameraVector3, cameraPer, cameraVer)
+				cameraRotate(animAnl[0], animAnl[1])
+				animFrm+=3
+				if(animFrm>temp.length){
+					animFrm=0
+				}
+			}
 			start = window.performance.now()
 			raster();
 			end = window.performance.now()
@@ -888,10 +898,10 @@ function cameraMove(){
 function cameraRotate(X=0, Y=0){
 	//Perform roll
 	var arcX = degToArc(X), arcY = degToArc(Y)
-	var tempVer = tiltRight? vectorAdd(vectorScalar(cameraVer, Math.sin(degToArc(91))), vectorScalar(cameraPer, Math.cos(degToArc(91)))): cameraVer
-	var tempPer = tiltRight? vectorAdd(vectorScalar(cameraVer, Math.sin(degToArc(1))), vectorScalar(cameraPer, Math.cos(degToArc(1)))): cameraPer
-	tempVer = tiltLeft? vectorAdd(vectorScalar(tempVer, Math.sin(degToArc(89))), vectorScalar(tempPer, Math.cos(degToArc(89)))): tempVer
-	tempPer = tiltLeft? vectorAdd(vectorScalar(tempVer, Math.sin(degToArc(-1))), vectorScalar(tempPer, Math.cos(degToArc(-1)))): tempPer
+	var tempVer = tiltRight? vectorAdd(vectorScalar(cameraVer, Math.sin(degToArc(90.1))), vectorScalar(cameraPer, Math.cos(degToArc(90.1)))): cameraVer
+	var tempPer = tiltRight? vectorAdd(vectorScalar(cameraVer, Math.sin(degToArc(0.1))), vectorScalar(cameraPer, Math.cos(degToArc(0.1)))): cameraPer
+	tempVer = tiltLeft? vectorAdd(vectorScalar(tempVer, Math.sin(degToArc(89.9))), vectorScalar(tempPer, Math.cos(degToArc(89.9)))): tempVer
+	tempPer = tiltLeft? vectorAdd(vectorScalar(tempVer, Math.sin(degToArc(-0.1))), vectorScalar(tempPer, Math.cos(degToArc(-0.1)))): tempPer
 	//Perform yaw
 	var tempV3 = vectorAdd(vectorScalar(cameraVector3, Math.cos(arcX)), vectorScalar(tempPer, Math.sin(arcX)))
 	tempPer = vectorAdd(vectorScalar(cameraVector3, Math.cos(arcX+Math.PI/2)), vectorScalar(tempPer, Math.sin(arcX+Math.PI/2)))
