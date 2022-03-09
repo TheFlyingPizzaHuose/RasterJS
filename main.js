@@ -5,6 +5,7 @@ import {xyToIndex, degToArc, vectorAdd, vectorScalar, sort2dReverse, vectorDista
 import {generateZMap} from './js/shading.js';
 import {animationPosition} from './js/position.js';
 import {animationRotation} from './js/rotation.js';
+import {decode} from './jpeg-js-master/lib/decoder.js'
 
 //###########################################Variables###########################################
 //Config settings
@@ -15,11 +16,11 @@ var cinematicMode = false
 var ctx = document.getElementById('screen'), c = ctx.getContext("2d"), width = ctx.width, height = ctx.height;
 var graph = document.getElementById('Frametime'),  graphc = document.getElementById('Frametime').getContext("2d");;
 //Debug variables
-var frameCounter=0,frameSinceLastTime=0,vertexCount=0,hasErr=false,countsSinceLastErr=0,showDebug=true, frameTimeGraph=[];
+var frameCounter=0,timeSinceLastFrame=0,vertexCount=0,hasErr=false,countsSinceLastErr=0,showDebug=true, frameTimeGraph=[];
 //Scene data variables
 var elements=[],objectVerticies=[],objectAnimate=[],sortedIndexes=[],sunAngle=0,gamma=3,animFrm=0;
 //Texture variables
-var textures=[],textCoords=[],
+var textures=[],textCoords=[],texturesAlpha=[],
 textureColorPaths=['./textures/Asteroid.jpg', //0
 				   './textures/Earth.jpg', //1
 				   './textures/Dirt.jpg',//2
@@ -76,7 +77,8 @@ load.onload = function() {
 };
 load.src = './textures/loading.png';
 textureColorPaths.forEach((value,index)=>{
-	importTexture(value, index, textureAlphaPaths[index])
+	importTexture(value, index)
+	importTexture(textureAlphaPaths[index], index, true)
 })
 
 selfImport({file: './models/Sun.obj', offset: [-30000,30000,0], scale: 100, isEmmision: true, textureIndex: 3});//Sun
@@ -249,16 +251,7 @@ setTimeout(function(){
 			render()
 		}
 	}else{
-		//Attemps to load previously unloaded textures
-		setInterval(function(){
-			textureColorPaths.forEach((value,index)=>{
-				if(textures[index]==(null || undefined)){
-					console.log('Trying to import texture again')
-					importTexture(value, index, textureAlphaPaths[index])
-				}
-			})
-		},1000)
-		setInterval(getFramerate, 1000);
+		setInterval(getFramerate, 1);
 		setInterval(render, frameCap);
 	}
 }, 2000);
@@ -494,7 +487,7 @@ function selfImport(object, userMode=false)
 										 isBackground:isBackground, 
 										 LOD:LOD, 
 										 textCordS:coordindexes, 
-										 textureIndex:textureIndex}));
+										 textureIndex:textureIndex,}));
 		})
 
 		//display that another object has been imported
@@ -542,37 +535,31 @@ function copyPaste(model, vertices, offset=[0,0,0], scale=1, isEmmision=false, i
 	document.getElementById('Vertex Count').textContent = "Vertex Count: " + vertexCount;
 }
 //Self import texture
-function importTexture(path, ind, alphaPath){
-	var Ctx = document.getElementById('texture')
-	var C = Ctx.getContext('2d')
-	//Get image
-	var color = new Image();
-	var alphaMask = new Image();
-	alphaMask.onload = function() {
-		//Adjust canvas size to fit
-		Ctx.width = alphaMask.width;
-		Ctx.height = alphaMask.height;
-		C.drawImage(alphaMask, 0, 0);
-		var alpha = C.getImageData(0, 0, color.width, color.height)
-		Ctx.width = 1;
-		Ctx.height = 1;
-		color.onload = function() {
-			//Adjust canvas size to fit
-			Ctx.width = color.width;
-			Ctx.height = color.height;
-			C.drawImage(color, 0, 0);
-			var temp = C.getImageData(0, 0, color.width, color.height)
-			for(var i=0;i<temp.data.length;i+=4){
-				temp.data[i+3]=alpha.data[i]
+function importTexture(path, ind, isAlpha){
+	var oReq = new XMLHttpRequest();
+	oReq.open("GET", path, true);
+	oReq.responseType = "arraybuffer";
+
+	oReq.onreadystatechange = function (){
+		if(oReq.readyState === 4 && (oReq.status === 200 || oReq.status == 0))
+		{
+			var arrayBuffer = oReq.response;
+			if (arrayBuffer) {
+				var byteArray = new Uint8Array(arrayBuffer);
+				var rawImageData = decode(byteArray, {useTArray:true});
+				if(isAlpha){
+					var temp = texturesAlpha
+					temp[ind] = rawImageData
+					texturesAlpha = temp
+				}else{
+					var temp = textures
+					temp[ind] = rawImageData
+					textures = temp
+				}
 			}
-			textures[ind] = {image: temp, isUnloaded:false};
-			Ctx.width = 1;
-			Ctx.height = 1;
-		};
+		}
 	};
-	alphaMask.src = alphaPath
-	color.src = path;
-	console.log('texture ' + path + ' imported');
+	oReq.send(null);
 }
 //###########################################Import functions###########################################
 
@@ -587,7 +574,7 @@ function display(image){
 function raster(){
 	var TwoDemCoords = new Array(objectVerticies.length).fill([]).map((v, i)=>new Array(objectVerticies[i].length).fill(false));
 	var result = new Uint8ClampedArray((new Array(width*height*4).fill(0)))
-
+	
 	document.getElementById('Frames').textContent = "Frames: " + frameCounter + ' '
 
 	//Additive Time Measument
@@ -599,7 +586,7 @@ function raster(){
 	cameraRotate()
 	var cameraVector=vectorScalar(cameraVector3, fovLength);
 
-	//Sort triangles by distance
+	//Sort elements by distance
 	if(cameraLocation != cameraLocationPrevious){
 		cameraLocationPrevious = cameraLocation;
 		sortedIndexes = [];
@@ -642,7 +629,8 @@ function raster(){
 				var verTexCoords = [textCoords[index[3]][value.textCordS1], textCoords[index[3]][value.textCordS2], textCoords[index[3]][value.textCordS3]];
 				
 				//Absent texture fallback
-				var texture = textures[value.textureIndex]!=undefined?textures[value.textureIndex].image:{width:1,height:1,data:[255,0,255,255]}
+				var texture = textures[value.textureIndex]!=undefined?textures[value.textureIndex]:{width:1,height:1,data:[255,0,255,255]}
+				var textureAlpha = texturesAlpha[value.textureIndex]!=undefined?texturesAlpha[value.textureIndex]:{width:1,height:1,data:[255,0,255,255]}
 
 				start = window.performance.now()
 				var lines = generateZMap(coords, width, height, verTexCoords, texture.width, texture.height);
@@ -698,7 +686,7 @@ function raster(){
 									result[i]  = texture.data[temp]*shade
 									result[i+1]= texture.data[temp+1]*shade
 									result[i+2]= texture.data[temp+2]*shade
-									result[i+3]= texture.data[temp+3]
+									result[i+3]= textureAlpha.data[temp]
 									texPos1=[texPos1[0]+texPosSlope[0],texPos1[1]+texPosSlope[1]]
 								}else{
 									texPos1=[texPos1[0]+texPosSlope[0],texPos1[1]+texPosSlope[1]]
@@ -739,9 +727,10 @@ function raster(){
 						//Checks if texture exists
 						var appSizeRatio = (width/800)*value.size/(Math.PI*2*temp1[1]*(fov/360))
 						var texture = textures[value.textureIndex]!=undefined?textures[value.textureIndex]:{image:{width:1,height:1,data:[255,0,255,255]}},
-						texHet = texture.image.height,
-						texCol = texture.image.data,
-						texWid = texture.image.width,
+						textureAlpha = texturesAlpha[value.textureIndex]!=undefined?texturesAlpha[value.textureIndex]:{width:1,height:1,data:[255,0,255,255]},
+						texHet = texture.height,
+						texCol = texture.data,
+						texWid = texture.width,
 						apparentWidth = parseInt(appSizeRatio*texWid),
 						apparentHeight = parseInt(appSizeRatio*texHet)
 						//Puts the texture in result 
@@ -754,7 +743,7 @@ function raster(){
 									//Texture position
 									var texPos = xyToIndex(parseInt(x/apparentWidth * texWid), parseInt(y/apparentHeight * texHet), texWid)
 									//Texture alpha check, out of index check, screen pixel is empty check
-									if (dispPos<result.length && texCol[texPos + 3]>0 && result[dispPos+3]==0){
+									if (dispPos<result.length && textureAlpha.data[texPos]>0 &&result[dispPos+3]==0){
 										result[dispPos]=texCol[texPos]
 										result[dispPos+1]=texCol[texPos+1]
 										result[dispPos+2]=texCol[texPos+2]
@@ -786,7 +775,7 @@ function render(){
 		//Check if textures are imported
 		var texturesImported = true
 		textureColorPaths.forEach((value,index)=>{
-			if(textures[index]==(null || undefined)){
+			if(textures[index]==null || textures[index]==undefined){
 				texturesImported = false
 			}
 		})
@@ -808,9 +797,12 @@ function render(){
 			start = window.performance.now()
 			raster();
 			end = window.performance.now()
+
+			frameTimeGraph=[end-start, ...frameTimeGraph].slice(0,100)
+			dispTime()
+			timeSinceLastFrame+=end-start;
+			frameCounter++;	
 		}
-		frameTimeGraph=[end-start, ...frameTimeGraph].slice(0,100)
-		dispTime()
 
 		//Updates color picker color
 		var colorString = 'rgb('+document.getElementById('R').value+','+
@@ -819,8 +811,6 @@ function render(){
 		document.getElementById('colorPick').style.backgroundColor = colorString
 		document.getElementById('colorPick').style.color = colorString
 																	
-		frameSinceLastTime++;
-		frameCounter++;	
 		gamma=parseInt(document.getElementById('gamma').value)
 		//Changes sun position
 		sunAngle=(new Date().getMinutes()/20)*360
@@ -846,18 +836,27 @@ function render(){
 }
 //gets framerate and displays
 function getFramerate(){
-	if(!hasErr){
-		document.getElementById('Framerate').textContent = 'Framerate: ' + frameSinceLastTime + ' '
-	}else{
-		nothing();
+	//Check if textures are imported
+	var texturesImported = true
+	textureColorPaths.forEach((value,index)=>{
+		if(textures[index]==null || textures[index]==undefined){
+			texturesImported = false
+		}
+	})
+	if(texturesImported){
+		if(!hasErr){
+			document.getElementById('Framerate').textContent = 'Framerate: ' + (1000/timeSinceLastFrame).toFixed(2) + ' '
+		}else{
+			nothing();
+		}
+		if(countsSinceLastErr<10){
+			countsSinceLastErr++
+		}else{
+			countsSinceLastErr=0
+			hasErr=false
+		}
+		timeSinceLastFrame = 0;
 	}
-	if(countsSinceLastErr<10){
-		countsSinceLastErr++
-	}else{
-		countsSinceLastErr=0
-		hasErr=false
-	}
-	frameSinceLastTime = 0;
 }
 //displays frametimes
 function dispTime(){
@@ -898,10 +897,10 @@ function cameraMove(){
 function cameraRotate(X=0, Y=0){
 	//Perform roll
 	var arcX = degToArc(X), arcY = degToArc(Y)
-	var tempVer = tiltRight? vectorAdd(vectorScalar(cameraVer, Math.sin(degToArc(90.1))), vectorScalar(cameraPer, Math.cos(degToArc(90.1)))): cameraVer
-	var tempPer = tiltRight? vectorAdd(vectorScalar(cameraVer, Math.sin(degToArc(0.1))), vectorScalar(cameraPer, Math.cos(degToArc(0.1)))): cameraPer
-	tempVer = tiltLeft? vectorAdd(vectorScalar(tempVer, Math.sin(degToArc(89.9))), vectorScalar(tempPer, Math.cos(degToArc(89.9)))): tempVer
-	tempPer = tiltLeft? vectorAdd(vectorScalar(tempVer, Math.sin(degToArc(-0.1))), vectorScalar(tempPer, Math.cos(degToArc(-0.1)))): tempPer
+	var tempVer = tiltRight? vectorAdd(vectorScalar(cameraVer, Math.sin(degToArc(91))), vectorScalar(cameraPer, Math.cos(degToArc(91)))): cameraVer
+	var tempPer = tiltRight? vectorAdd(vectorScalar(cameraVer, Math.sin(degToArc(1))), vectorScalar(cameraPer, Math.cos(degToArc(1)))): cameraPer
+	tempVer = tiltLeft? vectorAdd(vectorScalar(tempVer, Math.sin(degToArc(89))), vectorScalar(tempPer, Math.cos(degToArc(89)))): tempVer
+	tempPer = tiltLeft? vectorAdd(vectorScalar(tempVer, Math.sin(degToArc(-1))), vectorScalar(tempPer, Math.cos(degToArc(-1)))): tempPer
 	//Perform yaw
 	var tempV3 = vectorAdd(vectorScalar(cameraVector3, Math.cos(arcX)), vectorScalar(tempPer, Math.sin(arcX)))
 	tempPer = vectorAdd(vectorScalar(cameraVector3, Math.cos(arcX+Math.PI/2)), vectorScalar(tempPer, Math.sin(arcX+Math.PI/2)))
