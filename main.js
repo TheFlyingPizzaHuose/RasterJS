@@ -10,13 +10,13 @@ import {decode} from './jpeg-js-master/lib/decoder.js'
 //###########################################Variables###########################################
 //Config settings
 var debugMode = false;
-var frameCap = 1000/60
+var frameCap = 1000/30
 var cinematicMode = false
 //Canvas variables
 var ctx = document.getElementById('screen'), c = ctx.getContext("2d"), width = ctx.width, height = ctx.height;
 var graph = document.getElementById('Frametime'),  graphc = document.getElementById('Frametime').getContext("2d");;
 //Debug variables
-var frameCounter=0,timeSinceLastFrame=0,vertexCount=0,hasErr=false,countsSinceLastErr=0,showDebug=true, frameTimeGraph=[];
+var frameCounter=0,timeSinceLastFrame=0,vertexCount=0,hasErr=false,countsSinceLastErr=0,showDebug=true, frameTimeGraph=[], textNum;
 //Scene data variables
 var elements=[],objectVerticies=[],objectAnimate=[],sortedIndexes=[],sunAngle=0,gamma=3,animFrm=0;
 //Texture variables
@@ -42,7 +42,14 @@ textureColorPaths=['./textures/Asteroid.jpg', //0
 				   './textures/Uranus.jpg',//18
 				   './textures/Neptune.jpg',//19
 				   './textures/Planet Markers/MarkerUranus.jpg',//20
-				   './textures/Planet Markers/MarkerNeptune.jpg'],
+				   './textures/Planet Markers/MarkerNeptune.jpg',//21
+				   './textures/Planet Descriptions/Sun.jpg',//22
+				   './textures/Planet Descriptions/Mercury.jpg',//23
+				   './textures/Planet Descriptions/Venus.jpg',//24
+				   './textures/Planet Descriptions/Earth.jpg',//25
+				   './textures/Planet Descriptions/Mars.jpg',//26
+				   './textures/Planet Descriptions/Jupiter.jpg',//27
+				   './textures/Planet Descriptions/Saturn.jpg'],
 textureAlphaPaths=['./textures/AsteroidAlpha.jpg',//0
 				   './textures/EarthAlpha.jpg',//1
 				   './textures/DirtAlpha.jpg',//2
@@ -64,7 +71,14 @@ textureAlphaPaths=['./textures/AsteroidAlpha.jpg',//0
 				   './textures/UranusAlpha.jpg',//18
 				   './textures/NeptuneAlpha.jpg',//19
 				   './textures/Planet Markers/MarkerUranus.jpg',//20
-				   './textures/Planet Markers/MarkerNeptune.jpg']
+				   './textures/Planet Markers/MarkerNeptune.jpg',//21
+				   './textures/Planet Descriptions/Sun.jpg',//22
+				   './textures/Planet Descriptions/Mercury.jpg',//23
+				   './textures/Planet Descriptions/Venus.jpg',//24
+				   './textures/Planet Descriptions/Earth.jpg',//25
+				   './textures/Planet Descriptions/Mars.jpg',//26
+				   './textures/Planet Descriptions/Jupiter.jpg',//27
+				   './textures/Planet Descriptions/Saturn.jpg']
 //Camera variables 
 //var cameraPer=[0,1,0],cameraVector3=[-1,0,0],cameraVer=[0,0,-1],cameraLocation=[20,0,0],cameraLocationPrevious=[],fov=70,fovLength=1;
 var cameraPer=[1,0,0],cameraVector3=[0,1,0],cameraVer=[0,0,-1],cameraLocation=[0,-200,0],cameraLocationPrevious=[],fov=70,fovLength=1;
@@ -688,6 +702,8 @@ function raster(){
 									result[i+2]= texture.data[temp+2]*shade
 									result[i+3]= textureAlpha.data[temp]
 									texPos1=[texPos1[0]+texPosSlope[0],texPos1[1]+texPosSlope[1]]
+									//Checks if player is looking at certain model
+									var none = (parseInt(1000*i/result.length)==500)?textNum=index[1]:undefined;
 								}else{
 									texPos1=[texPos1[0]+texPosSlope[0],texPos1[1]+texPosSlope[1]]
 								}
@@ -757,7 +773,63 @@ function raster(){
 			}
 		}
 	})
-
+	//Renders text
+	var descTextNum;
+	switch(textNum){
+		case 0:
+			descTextNum=22
+			break;
+		case 1:
+			descTextNum=25
+			break;
+		case 7:
+			break;
+		case 8:
+			descTextNum=28
+			break;
+		case 9:
+			descTextNum=26
+			break;
+		case 10:
+			descTextNum=23
+			break;
+		case 11:
+			descTextNum=24
+			break;
+		case 12:
+			descTextNum=27
+			break;
+		case 13:
+			break;
+		case 14:
+			break;
+	}
+	if(descTextNum!=undefined){
+		//Checks if texture exists
+		var texture = textures[descTextNum]!=undefined?textures[descTextNum]:{image:{width:1,height:1,data:[255,0,255,255]}},
+		textureAlpha = texturesAlpha[descTextNum]!=undefined?texturesAlpha[descTextNum]:{width:1,height:1,data:[255,0,255,255]},
+		texHet = texture.height,
+		texCol = texture.data,
+		texWid = texture.width,
+		apparentWidth = parseInt(0.8*texWid),
+		apparentHeight = parseInt(0.8*texHet)
+		//Puts the texture in result 
+		for(var y=0;y<apparentHeight;y++){
+			for(var x=0;x<apparentWidth;x++){
+				//Particle screen position
+				var dispPos = (x+(y*width))*4
+				//Texture position
+				var texPos = xyToIndex(parseInt(x/apparentWidth * texWid), parseInt(y/apparentHeight * texHet), texWid)
+				//Texture alpha check, out of index check, screen pixel is empty check
+				if (textureAlpha.data[texPos]>0){
+					result[dispPos]=texCol[texPos]
+					result[dispPos+1]=texCol[texPos+1]
+					result[dispPos+2]=texCol[texPos+2]
+					result[dispPos+3]=255
+				}
+			}
+		}
+	}
 	//console.log(times)
 	display(result);
 }
